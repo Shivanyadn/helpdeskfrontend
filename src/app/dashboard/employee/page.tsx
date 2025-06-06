@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 
 // Import the analytics components
 import TicketStatusGraph from '@/app/analytics/employee/graph/view_ticket_status';
+import { getTickets } from '@/api/tickets';
 
 export default function EmployeeDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -90,20 +91,59 @@ export default function EmployeeDashboard() {
     };
   }, [profileMenuRef, notificationsRef]);
 
-  // Sample data for tickets
-  const ticketStats = [
-    { title: "Open Tickets", value: "3", icon: <Ticket className="text-blue-500" />, change: "+1 from last week" },
-    { title: "In Progress", value: "2", icon: <Clock className="text-orange-500" />, change: "No change" },
-    { title: "Resolved", value: "8", icon: <CheckCircle className="text-green-500" />, change: "+3 from last week" },
-    { title: "Pending", value: "1", icon: <AlertCircle className="text-red-500" />, change: "-1 from last week" }
-  ];
+  const [ticketStats, setTicketStats] = useState({
+    open: 0,
+    inProgress: 0,
+    resolved: 0,
+    pending: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Sample recent tickets
-  const recentTickets = [
-    { id: "TKT-001", subject: "Email access issue", status: "Open", priority: "High", date: "2024-02-20" },
-    { id: "TKT-002", subject: "Software installation request", status: "In Progress", priority: "Medium", date: "2024-02-19" },
-    { id: "TKT-003", subject: "Password reset", status: "Resolved", priority: "Low", date: "2024-02-18" }
-  ];
+  useEffect(() => {
+    const fetchTicketStats = async () => {
+      try {
+        setLoading(true);
+        const tickets = await getTickets();
+
+        const stats = {
+          open: 0,
+          inProgress: 0,
+          resolved: 0,
+          pending: 0,
+        };
+
+        tickets.forEach(ticket => {
+          switch (ticket.status) {
+            case 'Open':
+              stats.open += 1;
+              break;
+            case 'In Progress':
+              stats.inProgress += 1;
+              break;
+            case 'Resolved':
+              stats.resolved += 1;
+              break;
+            case 'Pending':
+              stats.pending += 1;
+              break;
+            default:
+              break;
+          }
+        });
+
+        setTicketStats(stats);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching ticket stats:', err);
+        setError('Failed to load ticket stats. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTicketStats();
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">
@@ -280,53 +320,64 @@ export default function EmployeeDashboard() {
 
           {/* Stats Cards - Updated with hover tooltips */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {ticketStats.map((stat, index) => (
-              <div 
-                key={index}
-                className="relative group"
-                onMouseEnter={() => setHoveredCard(index)}
-                onMouseLeave={() => setHoveredCard(null)}
-              >
-                <Card className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-transform group-hover:scale-[1.02] group-hover:shadow-md">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800">{stat.title}</h3>
-                      <p className="text-sm text-gray-500 mt-1">Last 7 days</p>
-                      <div className="text-2xl font-bold mt-3 text-gray-900">{stat.value}</div>
-                      <div className="flex items-center mt-2">
-                        <TrendingUp size={14} className="text-green-500 mr-1" />
-                        <span className="text-xs text-gray-500">{stat.change}</span>
+            {loading ? (
+              <div className="col-span-4 text-center text-gray-500">Loading ticket stats...</div>
+            ) : error ? (
+              <div className="col-span-4 text-center text-red-500">{error}</div>
+            ) : (
+              [
+                { title: "Open Tickets", value: ticketStats.open, icon: <Ticket className="text-blue-500" />, change: "+1 from last week" },
+                { title: "In Progress", value: ticketStats.inProgress, icon: <Clock className="text-orange-500" />, change: "No change" },
+                { title: "Resolved", value: ticketStats.resolved, icon: <CheckCircle className="text-green-500" />, change: "+3 from last week" },
+                { title: "Pending", value: ticketStats.pending, icon: <AlertCircle className="text-red-500" />, change: "-1 from last week" }
+              ].map((stat, index) => (
+                <div 
+                  key={index}
+                  className="relative group"
+                  onMouseEnter={() => setHoveredCard(index)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                >
+                  <Card className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-transform group-hover:scale-[1.02] group-hover:shadow-md">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800">{stat.title}</h3>
+                        <p className="text-sm text-gray-500 mt-1">Last 7 days</p>
+                        <div className="text-2xl font-bold mt-3 text-gray-900">{stat.value}</div>
+                        <div className="flex items-center mt-2">
+                          <TrendingUp size={14} className="text-green-500 mr-1" />
+                          <span className="text-xs text-gray-500">{stat.change}</span>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        {stat.icon}
                       </div>
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                      {stat.icon}
+                  </Card>
+                  
+                  {/* Tooltip that appears on hover */}
+                  {hoveredCard === index && (
+                    <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-lg shadow-xl z-20 p-4 border border-gray-100 transition-opacity duration-200">
+                      <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                        {stat.icon}
+                        <span className="ml-2">{stat.title} Details</span>
+                      </h4>
+                      <div className="space-y-2">
+                        {ticketDetails.map((detail, idx) => (
+                          <div key={idx} className="flex justify-between items-center">
+                            <span className="text-sm text-gray-600">{detail.label}</span>
+                            <span className="text-sm font-medium text-gray-800">{detail.value}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </Card>
-                
-                {/* Tooltip that appears on hover */}
-                {hoveredCard === index && (
-                  <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-lg shadow-xl z-20 p-4 border border-gray-100 transition-opacity duration-200">
-                    <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
-                      {stat.icon}
-                      <span className="ml-2">{stat.title} Details</span>
-                    </h4>
-                    <div className="space-y-2">
-                      {ticketDetails.map((detail, idx) => (
-                        <div key={idx} className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">{detail.label}</span>
-                          <span className="text-sm font-medium text-gray-800">{detail.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              ))
+            )}
           </div>
 
- {/* Quick Actions - Moved before Performance Analytics */}
- <section className="mb-8">
+          {/* Quick Actions - Moved before Performance Analytics */}
+          <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4 text-gray-700 flex items-center">
               <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
                 <Briefcase size={16} className="text-blue-600" />
@@ -374,10 +425,6 @@ export default function EmployeeDashboard() {
               </div>
             </Card>
           </section>
-
-      
-          
-
 
           {/* Chat Options - Enhanced Floating Button with Popups */}
           <div className="fixed bottom-4 right-4 z-50">

@@ -36,6 +36,7 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
+import axios from "axios";
 
 // Register ChartJS components
 ChartJS.register(
@@ -288,6 +289,107 @@ const AgentDashboard = () => {
     };
   }, [chatOptionsRef]);
 
+  const [metricsOverview, setMetricsOverview] = useState({
+    assignedTickets: 0,
+    slaBreaches: 0,
+    avgResolutionTime: "0h",
+    customerSatisfaction: "0%",
+  });
+  const [performanceAnalytics, setPerformanceAnalytics] = useState<{
+    labels: string[];
+    ticketsAssigned: number[];
+    ticketsResolved: number[];
+    slaBreaches: number[];
+  }>({
+    labels: [],
+    ticketsAssigned: [],
+    ticketsResolved: [],
+    slaBreaches: [],
+  });
+
+  // Fetch metrics and analytics data
+  useEffect(() => {
+    const fetchMetricsAndAnalytics = async () => {
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+
+        // Fetch tickets data
+        const ticketsResponse = await axios.get('http://localhost:5000/api/tickets', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // Fetch resolution times data
+        const resolutionTimesResponse = await axios.get('http://localhost:5000/api/tickets/resolution-times', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // Fetch analytics data
+        const analyticsResponse = await axios.get('http://localhost:5000/api/tickets/analytics', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (ticketsResponse.data && resolutionTimesResponse.data.success && analyticsResponse.data.success) {
+          const tickets = ticketsResponse.data;
+          const resolutionTimes = resolutionTimesResponse.data.resolutionTimes;
+          const analytics = analyticsResponse.data;
+
+          // Metrics Overview
+          const assignedTickets = tickets.length;
+          const slaBreachesCount = analytics.slaBreaches.length;
+          const avgResolutionTime = resolutionTimes.length
+            ? (
+                resolutionTimes.reduce((sum: number, ticket: { resolutionTimeInHours: string }) => sum + parseFloat(ticket.resolutionTimeInHours), 0) /
+                resolutionTimes.length
+              ).toFixed(2) + "h"
+            : "0h";
+          const customerSatisfaction = analytics.performance[0]?.performanceScore || "0%";
+
+          setMetricsOverview({
+            assignedTickets,
+            slaBreaches: slaBreachesCount,
+            avgResolutionTime,
+            customerSatisfaction,
+          });
+
+          // Performance Analytics
+          const monthlyData = tickets.reduce(
+            (acc: Record<string, { assigned: number; resolved: number; breaches: number }>, ticket: { createdAt: string; status: string; ticketId: string }) => {
+              const month = new Date(ticket.createdAt).toLocaleString('default', { month: 'short', year: 'numeric' });
+              if (!acc[month]) acc[month] = { assigned: 0, resolved: 0, breaches: 0 };
+
+              acc[month].assigned += 1;
+              if (ticket.status === 'Closed') acc[month].resolved += 1;
+              if (analytics.slaBreaches.some((breach: { ticketId: string }) => breach.ticketId === ticket.ticketId)) acc[month].breaches += 1;
+
+              return acc;
+            },
+            {}
+          );
+
+          const labels = Object.keys(monthlyData);
+          const ticketsAssigned = labels.map((month) => monthlyData[month].assigned);
+          const ticketsResolved = labels.map((month) => monthlyData[month].resolved);
+          const slaBreaches = labels.map((month) => monthlyData[month].breaches);
+
+          setPerformanceAnalytics({
+            labels,
+            ticketsAssigned,
+            ticketsResolved,
+            slaBreaches,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching metrics and analytics data:', error);
+        alert('Failed to fetch metrics and analytics data. Please try again later.');
+      }
+    };
+
+    fetchMetricsAndAnalytics();
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">
       <AgentSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
@@ -357,7 +459,8 @@ const AgentDashboard = () => {
                             <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
                           </div>
                         ))
-                      )}
+                      )
+                      }
                     </div>
                   </div>
                 )}
@@ -475,149 +578,22 @@ const AgentDashboard = () => {
               Metrics Overview
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Assigned Tickets Card with Hover Tooltip */}
-              <div 
-                className="relative group"
-                onMouseEnter={() => setHoveredCard(0)}
-                onMouseLeave={() => setHoveredCard(null)}
-              >
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-transform group-hover:scale-[1.02] group-hover:shadow-md">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800">{agentStats[0].title}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{agentStats[0].description}</p>
-                      <div className="text-2xl font-bold mt-3 text-gray-900">{agentStats[0].value}</div>
-                    </div>
-                    <div className={`p-3 rounded-lg ${agentStats[0].bgColor}`}>
-                      {agentStats[0].icon}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Tooltip that appears on hover */}
-                {hoveredCard === 0 && (
-                  <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-lg shadow-xl z-20 p-4 border border-gray-100 transition-opacity duration-200">
-                    <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
-                      <Briefcase className="mr-2" size={16} />
-                      Assigned Tickets Breakdown
-                    </h4>
-                    <div className="space-y-2">
-                      {assignedTicketsDetails.map((detail, idx) => (
-                        <div key={idx} className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">{detail.label}</span>
-                          <span className="text-sm font-medium text-gray-800">{detail.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <Link 
-                        href="/tickets/agent/view-ticket"
-                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                      >
-                        View All Tickets →
-                      </Link>
-                    </div>
-                  </div>
-                )}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-800">Assigned Tickets</h3>
+                <p className="text-sm text-gray-500 mt-1">Open, In-Progress, Closed</p>
+                <div className="text-2xl font-bold mt-3 text-gray-900">{metricsOverview.assignedTickets}</div>
               </div>
-              
-              {/* SLA Breach Alerts Card with Hover Tooltip */}
-              <div 
-                className="relative group"
-                onMouseEnter={() => setHoveredCard(1)}
-                onMouseLeave={() => setHoveredCard(null)}
-              >
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-transform group-hover:scale-[1.02] group-hover:shadow-md">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800">{agentStats[1].title}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{agentStats[1].description}</p>
-                      <div className="text-2xl font-bold mt-3 text-gray-900">{agentStats[1].value}</div>
-                    </div>
-                    <div className={`p-3 rounded-lg ${agentStats[1].bgColor}`}>
-                      {agentStats[1].icon}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Tooltip that appears on hover */}
-                {hoveredCard === 1 && (
-                  <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-lg shadow-xl z-20 p-4 border border-gray-100 transition-opacity duration-200">
-                    <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
-                      <AlertTriangle className="mr-2" size={16} />
-                      SLA Breach Alerts
-                    </h4>
-                    <div className="space-y-2">
-                      {slaBreachDetails.map((detail, idx) => (
-                        <div key={idx} className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">{detail.label}</span>
-                          <div className="flex items-center">
-                            <span className="text-sm font-medium text-gray-800 mr-2">{detail.value}</span>
-                            {detail.timeLeft && (
-                              <span className="text-xs px-2 py-0.5 bg-red-100 text-red-800 rounded-full">
-                                {detail.timeLeft}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <Link 
-                        href="/tickets/agent/assign-priority"
-                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                      >
-                        View All SLA Alerts →
-                      </Link>
-                    </div>
-                  </div>
-                )}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-800">SLA Breach Alerts</h3>
+                <p className="text-sm text-gray-500 mt-1">Critical Cases</p>
+                <div className="text-2xl font-bold mt-3 text-gray-900">{metricsOverview.slaBreaches}</div>
               </div>
-              
-              {/* Performance Card with Hover Tooltip */}
-              <div 
-                className="relative group"
-                onMouseEnter={() => setHoveredCard(2)}
-                onMouseLeave={() => setHoveredCard(null)}
-              >
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-transform group-hover:scale-[1.02] group-hover:shadow-md">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-800">{agentStats[2].title}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{agentStats[2].description}</p>
-                      <div className="text-2xl font-bold mt-3 text-gray-900">{agentStats[2].value}</div>
-                    </div>
-                    <div className={`p-3 rounded-lg ${agentStats[2].bgColor}`}>
-                      {agentStats[2].icon}
-                    </div>
-                  </div>
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-800">Performance</h3>
+                <p className="text-sm text-gray-500 mt-1">Resolution Time & Feedback</p>
+                <div className="text-2xl font-bold mt-3 text-gray-900">
+                  {metricsOverview.avgResolutionTime} • {metricsOverview.customerSatisfaction}
                 </div>
-                
-                {/* Tooltip that appears on hover */}
-                {hoveredCard === 2 && (
-                  <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-lg shadow-xl z-20 p-4 border border-gray-100 transition-opacity duration-200">
-                    <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
-                      <GaugeCircle className="mr-2" size={16} />
-                      Performance Metrics
-                    </h4>
-                    <div className="space-y-2">
-                      {performanceDetails.map((detail, idx) => (
-                        <div key={idx} className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">{detail.label}</span>
-                          <span className="text-sm font-medium text-gray-800">{detail.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <Link 
-                        href="/analytics/agent/graph"
-                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                      >
-                        View Detailed Analytics →
-                      </Link>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </section>
@@ -657,7 +633,7 @@ const AgentDashboard = () => {
             </div>
           </section>
 
-          {/* Performance Graph - Updated with month selection */}
+          {/* Performance Graph - Updated with chart type toggle */}
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4 text-gray-700 flex items-center">
               <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
@@ -666,55 +642,95 @@ const AgentDashboard = () => {
               Performance Analytics
             </h2>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 space-y-3 md:space-y-0">
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={() => setChartType('bar')}
-                    className={`p-2 rounded-md ${chartType === 'bar' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    <BarChart size={18} />
-                  </button>
-                  <button 
-                    onClick={() => setChartType('line')}
-                    className={`p-2 rounded-md ${chartType === 'line' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    <LineChart size={18} />
-                  </button>
-                </div>
-                
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setTimeRange('1month')}
-                    className={`px-3 py-1 text-sm rounded-md ${timeRange === '1month' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    1 Month
-                  </button>
-                  <button
-                    onClick={() => setTimeRange('3months')}
-                    className={`px-3 py-1 text-sm rounded-md ${timeRange === '3months' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    3 Months
-                  </button>
-                  <button
-                    onClick={() => setTimeRange('6months')}
-                    className={`px-3 py-1 text-sm rounded-md ${timeRange === '6months' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    6 Months
-                  </button>
-                </div>
-                
-                <Link 
-                  href="/analytics/agent/graph"
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              {/* Chart Type Toggle */}
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={() => setChartType('bar')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    chartType === 'bar'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  View Detailed Analytics
-                </Link>
+                  Bar Chart
+                </button>
+                <button
+                  onClick={() => setChartType('line')}
+                  className={`ml-2 px-4 py-2 rounded-lg text-sm font-medium ${
+                    chartType === 'line'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Line Chart
+                </button>
               </div>
+
+              {/* Chart Display */}
               <div className="h-80">
                 {chartType === 'bar' ? (
-                  <Bar data={ticketData} options={chartOptions} />
+                  <Bar
+                    data={{
+                      labels: performanceAnalytics.labels,
+                      datasets: [
+                        {
+                          label: 'Tickets Assigned',
+                          data: performanceAnalytics.ticketsAssigned,
+                          backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                          borderColor: 'rgb(59, 130, 246)',
+                          borderWidth: 2,
+                        },
+                        {
+                          label: 'Tickets Resolved',
+                          data: performanceAnalytics.ticketsResolved,
+                          backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                          borderColor: 'rgb(16, 185, 129)',
+                          borderWidth: 2,
+                        },
+                        {
+                          label: 'SLA Breaches',
+                          data: performanceAnalytics.slaBreaches,
+                          backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                          borderColor: 'rgb(239, 68, 68)',
+                          borderWidth: 2,
+                        },
+                      ],
+                    }}
+                    options={chartOptions}
+                  />
                 ) : (
-                  <Line data={ticketData} options={chartOptions} />
+                  <Line
+                    data={{
+                      labels: performanceAnalytics.labels,
+                      datasets: [
+                        {
+                          label: 'Tickets Assigned',
+                          data: performanceAnalytics.ticketsAssigned,
+                          borderColor: 'rgb(59, 130, 246)',
+                          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                          borderWidth: 2,
+                          tension: 0.4,
+                        },
+                        {
+                          label: 'Tickets Resolved',
+                          data: performanceAnalytics.ticketsResolved,
+                          borderColor: 'rgb(16, 185, 129)',
+                          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                          borderWidth: 2,
+                          tension: 0.4,
+                        },
+                        {
+                          label: 'SLA Breaches',
+                          data: performanceAnalytics.slaBreaches,
+                          borderColor: 'rgb(239, 68, 68)',
+                          backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                          borderWidth: 2,
+                          tension: 0.4,
+                        },
+                      ],
+                    }}
+                    options={chartOptions}
+                  />
                 )}
               </div>
             </div>

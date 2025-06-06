@@ -6,13 +6,15 @@ import { AlertTriangle, CheckCircle, Clock, Filter, Search, ArrowUpDown, Info, S
 import Link from 'next/link';
 
 interface Ticket {
-  id: string;
-  subject: string;
-  currentPriority: string;
-  updatedPriority: string;
-  category: string;
-  timeOpen: string;
-  status: string;
+  ticketId: string; // Unique identifier for the ticket
+  id: string; // Add this property if required by the API
+  title: string; // Title or subject of the ticket
+  priority: string; // Current priority of the ticket
+  updatedPriority: string; // Priority after user modification
+  currentPriority: string; // Add this property to track the original priority
+  category: string; // Category of the ticket
+  createdAt: string; // Creation date of the ticket
+  status: string; // Current status of the ticket
 }
 
 const AgentAssignPriorityPage = () => {
@@ -29,77 +31,111 @@ const AgentAssignPriorityPage = () => {
   const [bulkPriority, setBulkPriority] = useState('Medium');
 
   useEffect(() => {
-    // Mock ticket list with expanded data
-    const mockTickets: Ticket[] = [
-      { 
-        id: 'TK001', 
-        subject: 'Email access issue for marketing team', 
-        currentPriority: 'Medium', 
-        updatedPriority: 'Medium',
-        category: 'Software',
-        timeOpen: '2 days',
-        status: 'Open'
-      },
-      { 
-        id: 'TK002', 
-        subject: 'Laptop screen broken - replacement needed', 
-        currentPriority: 'High', 
-        updatedPriority: 'High',
-        category: 'Hardware',
-        timeOpen: '4 hours',
-        status: 'In Progress'
-      },
-      { 
-        id: 'TK003', 
-        subject: 'VPN not working for remote employees', 
-        currentPriority: 'Low', 
-        updatedPriority: 'Low',
-        category: 'Network',
-        timeOpen: '1 day',
-        status: 'Open'
-      },
-      { 
-        id: 'TK004', 
-        subject: 'New software installation request', 
-        currentPriority: 'Low', 
-        updatedPriority: 'Low',
-        category: 'Software',
-        timeOpen: '3 days',
-        status: 'Pending'
-      },
-      { 
-        id: 'TK005', 
-        subject: 'Server down affecting customer portal', 
-        currentPriority: 'Medium', 
-        updatedPriority: 'Critical',
-        category: 'Server',
-        timeOpen: '30 minutes',
-        status: 'Open'
-      },
-    ];
-    setTickets(mockTickets);
+    const fetchTickets = async () => {
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+
+        const response = await fetch('http://localhost:5000/api/tickets', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error fetching tickets: ${response.status}`);
+        }
+
+        const data: Ticket[] = await response.json();
+
+        // Map the API response to match the required format
+        const formattedTickets = data.map(ticket => ({
+          ticketId: ticket.ticketId,
+          id: ticket.ticketId, // Map ticketId to id if required
+          title: ticket.title,
+          priority: ticket.priority,
+          updatedPriority: ticket.priority, // Initialize updatedPriority with the current priority
+          currentPriority: ticket.priority, // Track the original priority
+          category: ticket.category,
+          createdAt: ticket.createdAt,
+          status: ticket.status,
+        }));
+
+        setTickets(formattedTickets);
+      } catch (error) {
+        console.error('Error fetching tickets:', error);
+        setTickets([]);
+      }
+    };
+
+    fetchTickets();
   }, []);
 
   const handlePriorityChange = (index: number, newPriority: string) => {
     const updated = [...tickets];
     updated[index].updatedPriority = newPriority;
+    updated[index].currentPriority = newPriority; // Automatically update currentPriority
     setTickets(updated);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
-    setTimeout(() => {
-      // Simulate saving updated priorities
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+
+      if (!token) {
+        throw new Error('Authorization token is missing. Please log in again.');
+      }
+
+      // Filter tickets where the priority has been updated
+      const updatedTickets = tickets.filter(ticket => ticket.currentPriority !== ticket.updatedPriority);
+
+      // Make PATCH requests for each updated ticket
+      const updatePromises = updatedTickets.map(ticket =>
+        fetch('http://localhost:5000/api/tickets/update', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            ticketId: ticket.id,
+            priority: ticket.updatedPriority,
+          }),
+        })
+      );
+
+      // Wait for all requests to complete
+      const responses = await Promise.all(updatePromises);
+
+      // Check for any failed requests
+      const failedResponses = responses.filter(response => !response.ok);
+      if (failedResponses.length > 0) {
+        throw new Error('Some tickets failed to update. Please try again.');
+      }
+
       setSuccessMessage('Ticket priorities updated successfully!');
-      setSaving(false);
       setSelectedTickets([]);
       setShowBulkActions(false);
-      
+
+      // Refresh tickets after saving
+      const refreshedTickets = tickets.map(ticket => ({
+        ...ticket,
+        currentPriority: ticket.updatedPriority,
+      }));
+      setTickets(refreshedTickets);
+    } catch (error) {
+      console.error('Error saving priorities:', error);
+    } finally {
+      setSaving(false);
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
-    }, 800);
+    }
   };
 
   const toggleSidebar = () => {
@@ -107,7 +143,7 @@ const AgentAssignPriorityPage = () => {
   };
 
   const getPriorityColor = (priority: string) => {
-    switch(priority) {
+    switch (priority) {
       case 'Critical':
         return 'bg-gradient-to-r from-red-50 to-red-100 text-red-800 border-red-200';
       case 'High':
@@ -122,7 +158,7 @@ const AgentAssignPriorityPage = () => {
   };
 
   const getPriorityIcon = (priority: string) => {
-    switch(priority) {
+    switch (priority) {
       case 'Critical':
         return <Shield size={14} className="mr-1 text-red-600" />;
       case 'High':
@@ -137,17 +173,14 @@ const AgentAssignPriorityPage = () => {
   };
 
   const filteredTickets = tickets.filter(ticket => {
-    // Apply search filter
-    const matchesSearch = ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          ticket.id.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Apply status filter
+    const matchesSearch = ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.ticketId.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus;
-    
+
     return matchesSearch && matchesStatus;
   });
 
-  // Sort tickets
   const sortedTickets = [...filteredTickets].sort((a, b) => {
     if (sortBy === 'priority') {
       const priorityOrder = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
@@ -155,15 +188,13 @@ const AgentAssignPriorityPage = () => {
       const bValue = priorityOrder[b.updatedPriority as keyof typeof priorityOrder] || 0;
       return sortOrder === 'desc' ? bValue - aValue : aValue - bValue;
     } else if (sortBy === 'time') {
-      // Simple string comparison for demo purposes
-      return sortOrder === 'desc' 
-        ? a.timeOpen.localeCompare(b.timeOpen) 
-        : b.timeOpen.localeCompare(a.timeOpen);
+      return sortOrder === 'desc'
+        ? a.createdAt.localeCompare(b.createdAt)
+        : b.createdAt.localeCompare(a.createdAt);
     } else {
-      // Sort by ID
-      return sortOrder === 'desc' 
-        ? b.id.localeCompare(a.id) 
-        : a.id.localeCompare(b.id);
+      return sortOrder === 'desc'
+        ? b.ticketId.localeCompare(a.ticketId)
+        : a.ticketId.localeCompare(b.ticketId);
     }
   });
 
@@ -190,14 +221,14 @@ const AgentAssignPriorityPage = () => {
     if (selectedTickets.length === sortedTickets.length) {
       setSelectedTickets([]);
     } else {
-      setSelectedTickets(sortedTickets.map(ticket => ticket.id));
+      setSelectedTickets(sortedTickets.map(ticket => ticket.ticketId));
     }
   };
 
   const applyBulkPriority = () => {
     const updated = [...tickets];
     selectedTickets.forEach(ticketId => {
-      const index = updated.findIndex(t => t.id === ticketId);
+      const index = updated.findIndex(t => t.ticketId === ticketId);
       if (index !== -1) {
         updated[index].updatedPriority = bulkPriority;
       }
@@ -209,7 +240,7 @@ const AgentAssignPriorityPage = () => {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <AgentSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-      
+
       <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
         <div className="p-6 max-w-7xl mx-auto">
           {/* Header with title and description */}
@@ -231,7 +262,7 @@ const AgentAssignPriorityPage = () => {
                   className="pl-10 pr-4 py-2.5 w-full border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
               </div>
-              
+
               <div className="flex flex-wrap gap-2">
                 <select
                   value={filterStatus}
@@ -244,14 +275,14 @@ const AgentAssignPriorityPage = () => {
                   <option value="Pending">Pending</option>
                   <option value="Resolved">Resolved</option>
                 </select>
-                
+
                 <button className="flex items-center px-4 py-2.5 bg-white border rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
                   <Filter size={18} className="mr-2 text-gray-500" />
                   More Filters
                 </button>
-                
+
                 {selectedTickets.length > 0 && (
-                  <button 
+                  <button
                     onClick={() => setShowBulkActions(!showBulkActions)}
                     className="flex items-center px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
@@ -260,7 +291,7 @@ const AgentAssignPriorityPage = () => {
                 )}
               </div>
             </div>
-            
+
             {/* Bulk actions panel */}
             {showBulkActions && selectedTickets.length > 0 && (
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex flex-wrap items-center gap-3">
@@ -275,13 +306,13 @@ const AgentAssignPriorityPage = () => {
                   <option value="High">High</option>
                   <option value="Critical">Critical</option>
                 </select>
-                <button 
+                <button
                   onClick={applyBulkPriority}
                   className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                 >
                   Apply
                 </button>
-                <button 
+                <button
                   onClick={() => setSelectedTickets([])}
                   className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
                 >
@@ -303,8 +334,8 @@ const AgentAssignPriorityPage = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="grid grid-cols-12 gap-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 text-sm font-medium text-gray-700">
               <div className="col-span-1 flex items-center">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={selectedTickets.length === sortedTickets.length && sortedTickets.length > 0}
                   onChange={toggleSelectAll}
                   className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -313,7 +344,7 @@ const AgentAssignPriorityPage = () => {
               <div className="col-span-1">ID</div>
               <div className="col-span-3">Subject</div>
               <div className="col-span-2">
-                <button 
+                <button
                   onClick={() => toggleSort('priority')}
                   className="flex items-center"
                 >
@@ -323,7 +354,7 @@ const AgentAssignPriorityPage = () => {
               </div>
               <div className="col-span-2">Category</div>
               <div className="col-span-2">
-                <button 
+                <button
                   onClick={() => toggleSort('time')}
                   className="flex items-center"
                 >
@@ -333,30 +364,30 @@ const AgentAssignPriorityPage = () => {
               </div>
               <div className="col-span-1">New Priority</div>
             </div>
-            
+
             <div className="divide-y divide-gray-100">
               {sortedTickets.length > 0 ? (
                 sortedTickets.map((ticket, index) => {
-                  const originalIndex = tickets.findIndex(t => t.id === ticket.id);
-                  const isSelected = selectedTickets.includes(ticket.id);
-                  
+                  const originalIndex = tickets.findIndex(t => t.ticketId === ticket.ticketId);
+                  const isSelected = selectedTickets.includes(ticket.ticketId);
+
                   return (
-                    <div 
-                      key={ticket.id} 
+                    <div
+                      key={ticket.ticketId}
                       className={`grid grid-cols-12 gap-4 p-4 items-center hover:bg-blue-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}
                     >
                       <div className="col-span-1">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleTicketSelection(ticket.id)}
+                          onChange={() => toggleTicketSelection(ticket.ticketId)}
                           className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                       </div>
-                      <div className="col-span-1 font-medium text-gray-700">{ticket.id}</div>
+                      <div className="col-span-1 font-medium text-gray-700">{ticket.ticketId}</div>
                       <div className="col-span-3">
-                        <Link href={`/tickets/agent/update-ticket?id=${ticket.id}`} className="text-blue-600 hover:text-blue-800 hover:underline font-medium">
-                          {ticket.subject}
+                        <Link href={`/tickets/agent/update-ticket?id=${ticket.ticketId}`} className="text-blue-600 hover:text-blue-800 hover:underline font-medium">
+                          {ticket.title}
                         </Link>
                         <div className="text-xs text-gray-500 mt-1 flex items-center">
                           <span className={`px-2 py-0.5 rounded-full inline-flex items-center ${
@@ -371,9 +402,9 @@ const AgentAssignPriorityPage = () => {
                         </div>
                       </div>
                       <div className="col-span-2">
-                        <span className={`px-3 py-1.5 rounded-md border inline-flex items-center ${getPriorityColor(ticket.currentPriority)}`}>
-                          {getPriorityIcon(ticket.currentPriority)}
-                          {ticket.currentPriority}
+                        <span className={`px-3 py-1.5 rounded-md border inline-flex items-center ${getPriorityColor(ticket.priority)}`}>
+                          {getPriorityIcon(ticket.priority)}
+                          {ticket.priority}
                         </span>
                       </div>
                       <div className="col-span-2 text-gray-700 flex items-center">
@@ -382,7 +413,7 @@ const AgentAssignPriorityPage = () => {
                       </div>
                       <div className="col-span-2 flex items-center">
                         <Calendar size={16} className="mr-2 text-gray-400" />
-                        {ticket.timeOpen}
+                        {ticket.createdAt}
                       </div>
                       <div className="col-span-1">
                         <select

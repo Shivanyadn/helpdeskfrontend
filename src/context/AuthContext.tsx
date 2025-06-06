@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
-import { authService, UserData, LoginResponse } from '@/api';
+import { authService } from '@/api';
 
 type User = {
   id: string;
@@ -42,35 +42,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await authService.login({ username, password });
       
-      if (response.success && response.data) {
+      console.log('Full login response:', response); // Detailed log
+      
+      if (response.success && response.data.accessToken && response.data.user) { // Check for accessToken and user
         const userData = response.data.user;
-        const token = response.data.token;
+        const token = response.data.accessToken;
         
-        // Ensure token is properly stored with Bearer prefix if needed
-        const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
-        const rawToken = token.replace('Bearer ', '');
-        
-        // Store token in multiple formats for compatibility
-        localStorage.setItem('token', formattedToken);
-        localStorage.setItem('auth_token', formattedToken);
-        localStorage.setItem('raw_token', rawToken);
-        localStorage.setItem('authToken', rawToken); // Add this for compatibility with your create-ticket page
-        
-        // Store user data
+        // Store token and user data
+        localStorage.setItem('token', token);
         localStorage.setItem('user_data', JSON.stringify(userData));
-        localStorage.setItem('user', JSON.stringify(userData));
-        
-        // Store expiration if available
-        if (response.data.expiresAt) {
-          localStorage.setItem('tokenExpiry', response.data.expiresAt);
-        }
-        
-        console.log('Token stored successfully:', formattedToken.substring(0, 20) + '...');
-        
-        // Also store valid categories if they're available in the response
-        if (response.data.validCategories) {
-          localStorage.setItem('validCategories', JSON.stringify(response.data.validCategories));
-        }
         
         setUser({
           id: userData.id,
@@ -85,11 +65,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
         return true;
       } else {
+        console.error('Login failed:', response.error); // Debug log
         setError(response.error || 'Login failed');
         setIsLoading(false);
         return false;
       }
     } catch (err) {
+      console.error('Error during login:', err); // Debug log
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
       setIsLoading(false);
       return false;

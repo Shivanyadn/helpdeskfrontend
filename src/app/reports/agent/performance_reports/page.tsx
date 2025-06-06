@@ -2,31 +2,331 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import AgentSidebar from '@/app/sidebar/AgentSidebar';
 import { BarChart3, Clock, Star, CheckCircle, Calendar, ArrowUpDown, TrendingUp, TrendingDown, Filter, Download, Printer, ChevronDown, Users, Award, Target, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+
+interface ResolutionTime {
+  resolutionTimeInHours: string;
+  sla: string; // Add this property
+}
+
+interface MonthlyData {
+  labels: string[];
+  datasets: {
+    ticketsResolved: number[];
+    resolutionTime: number[];
+    satisfaction: number[];
+    slaCompliance: number[];
+  };
+}
 
 const PerformanceReports = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [timeRange, setTimeRange] = useState('3months');
   const [showFilters, setShowFilters] = useState(false);
-
-  // Add the missing data definitions here
-  const monthlyData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+  const [resolvedTickets, setResolvedTickets] = useState(0); // State for resolved tickets
+  const [averageResolutionTime, setAverageResolutionTime] = useState(0); // State for average resolution time
+  const [slaCompliance, setSlaCompliance] = useState(0); // State for SLA Compliance
+  const [customerSatisfaction, setCustomerSatisfaction] = useState(0); // State for Customer Satisfaction
+  const [monthlyData, setMonthlyData] = useState<MonthlyData>({
+    labels: [],
     datasets: {
-      ticketsResolved: [108, 115, 120, 118, 125, 130],
-      resolutionTime: [35, 32, 30, 28, 27, 25],
-      satisfaction: [4.6, 4.7, 4.8, 4.8, 4.9, 4.9],
-      slaCompliance: [92, 95, 98, 97, 99, 99]
-    }
-  };
+      ticketsResolved: [],
+      resolutionTime: [],
+      satisfaction: [],
+      slaCompliance: [],
+    },
+  });
+  const [categoryData, setCategoryData] = useState<{ labels: string[]; values: number[] }>({
+    labels: [],
+    values: [],
+  });
+  const [monthlyBreakdownData, setMonthlyBreakdownData] = useState<any[]>([]); // State for monthly breakdown data
 
-  const categoryData = {
-    labels: ['Software', 'Hardware', 'Network', 'Other'],
-    values: [45, 30, 15, 10]
-  };
+  useEffect(() => {
+    const fetchResolvedTickets = async () => {
+      try {
+        // Retrieve the token from localStorage
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+
+        // Fetch analytics data
+        const response = await axios.get('http://localhost:5000/api/tickets/analytics', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.success) {
+          const performance = response.data.performance[0] || {};
+          setResolvedTickets(performance.closed || 0); // Update resolved tickets count
+        }
+      } catch (error) {
+        console.error('Error fetching analytics data:', error);
+        alert('Failed to fetch analytics data. Please try again later.');
+      }
+    };
+
+    const fetchResolutionTimes = async () => {
+      try {
+        // Retrieve the token from localStorage
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+
+        // Fetch resolution times data
+        const response = await axios.get('http://localhost:5000/api/tickets/resolution-times', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.success) {
+          const resolutionTimes: ResolutionTime[] = response.data.resolutionTimes || [];
+          const totalResolutionTime = resolutionTimes.reduce(
+            (sum: number, ticket: ResolutionTime) => {
+              return sum + parseFloat(ticket.resolutionTimeInHours);
+            },
+            0 // Initial value for sum
+          );
+          const averageTime = resolutionTimes.length > 0 ? parseFloat((totalResolutionTime / resolutionTimes.length).toFixed(2)) : 0;
+          setAverageResolutionTime(averageTime); // Update average resolution time
+        }
+      } catch (error) {
+        console.error('Error fetching resolution times:', error);
+        alert('Failed to fetch resolution times. Please try again later.');
+      }
+    };
+
+    const fetchAnalyticsData = async () => {
+      try {
+        // Retrieve the token from localStorage
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+
+        // Fetch analytics data
+        const response = await axios.get('http://localhost:5000/api/tickets/analytics', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.success) {
+          const performance = response.data.performance[0] || {};
+          const totalTickets = performance.assigned || 0;
+          const slaBreaches = response.data.slaBreaches.length || 0;
+
+          // Ensure totalTickets is greater than 0 and handle edge cases
+          const slaCompliance =
+            totalTickets > 0
+              ? Math.max(0, ((totalTickets - slaBreaches) / totalTickets) * 100) // Ensure SLA Compliance is not negative
+              : 0;
+
+          // Update SLA Compliance state
+          setSlaCompliance(parseFloat(slaCompliance.toFixed(2)));
+
+          // Update Customer Satisfaction state
+          const customerSatisfaction = parseFloat(performance.performanceScore) || 0;
+          setCustomerSatisfaction(customerSatisfaction);
+        }
+      } catch (error) {
+        console.error('Error fetching analytics data:', error);
+        alert('Failed to fetch analytics data. Please try again later.');
+      }
+    };
+
+    const fetchMonthlyPerformanceData = async () => {
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+
+        // Fetch analytics data
+        const analyticsResponse = await axios.get('http://localhost:5000/api/tickets/analytics', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // Fetch resolution times data
+        const resolutionTimesResponse = await axios.get('http://localhost:5000/api/tickets/resolution-times', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (analyticsResponse.data.success && resolutionTimesResponse.data.success) {
+          const performance = analyticsResponse.data.performance[0] || {};
+          const slaBreaches = analyticsResponse.data.slaBreaches || [];
+          const resolutionTimes = resolutionTimesResponse.data.resolutionTimes || [];
+
+          // Process SLA breaches to group by month
+          const slaBreachesByMonth = slaBreaches.reduce((acc: Record<string, number>, breach: { sla: string }) => {
+            const month = new Date(breach.sla).toLocaleString('default', { month: 'short', year: 'numeric' });
+            acc[month] = (acc[month] || 0) + 1;
+            return acc;
+          }, {});
+
+          // Process resolution times to calculate average by month
+          const resolutionTimesByMonth = resolutionTimes.reduce(
+            (acc: Record<string, { total: number; count: number }>, ticket: ResolutionTime) => {
+              const month = new Date(ticket.sla || Date.now()).toLocaleString('default', { month: 'short', year: 'numeric' });
+              if (!acc[month]) acc[month] = { total: 0, count: 0 };
+              acc[month].total += parseFloat(ticket.resolutionTimeInHours);
+              acc[month].count += 1;
+              return acc;
+            },
+            {}
+          );
+
+          // Generate labels and datasets dynamically
+          const labels = Object.keys(slaBreachesByMonth).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+          const ticketsResolved = labels.map((month) => performance.closed || 0);
+          const resolutionTime = labels.map((month) => {
+            const data = resolutionTimesByMonth[month];
+            return data ? parseFloat((data.total / data.count).toFixed(2)) : 0;
+          });
+          const satisfaction = labels.map(() => parseFloat(performance.performanceScore) || 0);
+          const slaCompliance = labels.map((month) => {
+            const totalTickets = performance.assigned || 0;
+            const breaches = slaBreachesByMonth[month] || 0;
+            return totalTickets > 0 ? Math.max(0, ((totalTickets - breaches) / totalTickets) * 100) : 0;
+          });
+
+          // Debugging: Log the processed data
+          console.log('Labels:', labels);
+          console.log('Tickets Resolved:', ticketsResolved);
+          console.log('Resolution Time:', resolutionTime);
+          console.log('Satisfaction:', satisfaction);
+          console.log('SLA Compliance:', slaCompliance);
+
+          // Update monthly data state
+          setMonthlyData({
+            labels,
+            datasets: {
+              ticketsResolved,
+              resolutionTime,
+              satisfaction,
+              slaCompliance,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching monthly performance data:', error);
+        alert('Failed to fetch monthly performance data. Please try again later.');
+      }
+    };
+
+    const fetchCategoryData = async () => {
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+
+        // Fetch tickets data
+        const response = await axios.get('http://localhost:5000/api/tickets', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.data) {
+          const tickets = response.data;
+
+          // Calculate category distribution
+          const categoryCounts = tickets.reduce((acc: Record<string, number>, ticket: { category: string }) => {
+            acc[ticket.category] = (acc[ticket.category] || 0) + 1;
+            return acc;
+          }, {});
+
+          const totalTickets = tickets.length;
+          const categoryLabels = Object.keys(categoryCounts);
+          const categoryValues = categoryLabels.map((category) =>
+            parseFloat(((categoryCounts[category] / totalTickets) * 100).toFixed(2))
+          );
+
+          // Update category data state
+          setCategoryData({
+            labels: categoryLabels,
+            values: categoryValues,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching category data:', error);
+        alert('Failed to fetch category data. Please try again later.');
+      }
+    };
+
+    fetchResolvedTickets();
+    fetchResolutionTimes();
+    fetchAnalyticsData();
+    fetchMonthlyPerformanceData();
+    fetchCategoryData();
+  }, []);
+
+  useEffect(() => {
+    console.log('Monthly Data Updated:', monthlyData);
+  }, [monthlyData]);
+
+  useEffect(() => {
+    const fetchMonthlyBreakdownData = async () => {
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+
+        // Fetch tickets data
+        const response = await axios.get('http://localhost:5000/api/tickets', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.data) {
+          const tickets = response.data;
+
+          // Group tickets by month
+          const monthlyData = tickets.reduce((acc: Record<string, { resolved: number; resolutionTime: number; count: number }>, ticket: { createdAt: string; status: string; sla?: string }) => {
+            const month = new Date(ticket.createdAt).toLocaleString('default', { month: 'short', year: 'numeric' });
+            if (!acc[month]) acc[month] = { resolved: 0, resolutionTime: 0, count: 0 };
+
+            acc[month].count += 1;
+            if (ticket.status === 'Closed') {
+              acc[month].resolved += 1;
+              const resolutionTime = ticket.sla ? (new Date(ticket.sla).getTime() - new Date(ticket.createdAt).getTime()) / (1000 * 60) : 0; // Resolution time in minutes
+              acc[month].resolutionTime += resolutionTime;
+            }
+
+            return acc;
+          }, {});
+
+          // Generate table data
+          const tableData = Object.keys(monthlyData).map((month) => {
+            const data = monthlyData[month];
+            const avgResolutionTime = data.resolved > 0 ? (data.resolutionTime / data.resolved).toFixed(2) : 'N/A';
+            return {
+              month,
+              ticketsResolved: data.resolved,
+              avgResolutionTime,
+              customerRating: 'N/A', // Placeholder for customer rating
+              slaCompliance: 'N/A', // Placeholder for SLA compliance
+              performance: data.resolved > 0 ? 'Good' : 'Needs Improvement', // Example performance metric
+            };
+          });
+
+          setMonthlyBreakdownData(tableData);
+        }
+      } catch (error) {
+        console.error('Error fetching monthly breakdown data:', error);
+        alert('Failed to fetch monthly breakdown data. Please try again later.');
+      }
+    };
+
+    fetchMonthlyBreakdownData();
+  }, []);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -138,7 +438,7 @@ const PerformanceReports = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-500">Total Tickets Resolved</p>
-                    <h3 className="text-3xl font-bold mt-1 text-gray-800">120</h3>
+                    <h3 className="text-3xl font-bold mt-1 text-gray-800">{resolvedTickets}</h3>
                   </div>
                   <div className="p-2 bg-blue-50 rounded-lg">
                     <CheckCircle className="text-blue-600" size={24} />
@@ -157,7 +457,7 @@ const PerformanceReports = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-500">Average Resolution Time</p>
-                    <h3 className="text-3xl font-bold mt-1 text-gray-800">30 min</h3>
+                    <h3 className="text-3xl font-bold mt-1 text-gray-800">{averageResolutionTime} hours</h3>
                   </div>
                   <div className="p-2 bg-green-50 rounded-lg">
                     <Clock className="text-green-600" size={24} />
@@ -176,7 +476,7 @@ const PerformanceReports = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-500">Customer Satisfaction</p>
-                    <h3 className="text-3xl font-bold mt-1 text-gray-800">4.8/5</h3>
+                    <h3 className="text-3xl font-bold mt-1 text-gray-800">{customerSatisfaction}%</h3>
                   </div>
                   <div className="p-2 bg-yellow-50 rounded-lg">
                     <Star className="text-yellow-600" size={24} />
@@ -184,10 +484,7 @@ const PerformanceReports = () => {
                 </div>
                 <div className="mt-4 flex items-center text-sm text-green-600">
                   <TrendingUp size={16} className="mr-1" />
-                  <span>+0.2 from last month</span>
-                </div>
-                <div className="mt-2 h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                  <div className="bg-yellow-500 h-1 rounded-full" style={{ width: '96%' }}></div>
+                  <span>+2% from last month</span>
                 </div>
               </div>
               
@@ -195,7 +492,7 @@ const PerformanceReports = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-500">SLA Compliance</p>
-                    <h3 className="text-3xl font-bold mt-1 text-gray-800">98%</h3>
+                    <h3 className="text-3xl font-bold mt-1 text-gray-800">{slaCompliance}%</h3>
                   </div>
                   <div className="p-2 bg-purple-50 rounded-lg">
                     <Award className="text-purple-600" size={24} />
@@ -204,9 +501,6 @@ const PerformanceReports = () => {
                 <div className="mt-4 flex items-center text-sm text-green-600">
                   <TrendingUp size={16} className="mr-1" />
                   <span>+3% from last month</span>
-                </div>
-                <div className="mt-2 h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                  <div className="bg-purple-600 h-1 rounded-full" style={{ width: '98%' }}></div>
                 </div>
               </div>
             </div>
@@ -221,95 +515,24 @@ const PerformanceReports = () => {
               <div className="p-6">
                 {/* Bar chart visualization with SLA compliance */}
                 <div className="h-64 relative">
-                  {/* Chart background grid */}
-                  <div className="absolute inset-0 grid grid-cols-6 grid-rows-5">
-                    {Array(30).fill(0).map((_, i) => (
-                      <div key={i} className="border-r border-t border-gray-100"></div>
-                    ))}
-                  </div>
-                  
-                  {/* Y-axis labels */}
-                  <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-xs text-gray-500 py-2">
-                    <span>140</span>
-                    <span>120</span>
-                    <span>100</span>
-                    <span>80</span>
-                    <span>60</span>
-                    <span>40</span>
-                  </div>
-                  
-                  {/* X-axis labels */}
-                  <div className="absolute bottom-0 inset-x-0 flex justify-between text-xs text-gray-500 px-6">
-                    {monthlyData.labels.map((month, i) => (
-                      <span key={i}>{month}</span>
-                    ))}
-                  </div>
-                  
                   {/* Bar chart for tickets resolved */}
                   <div className="absolute inset-0 h-full w-full pt-5 px-8 pb-6 flex items-end justify-between">
                     {monthlyData.datasets.ticketsResolved.map((val, i) => (
                       <div key={i} className="relative flex-1 mx-1">
-                        <div 
-                          className="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-t-sm transition-all duration-500 ease-in-out hover:bg-blue-600"
-                          style={{ height: `${val * 1.2}px` }}
+                        <div
+                          className="absolute bottom-0 left-0 right-0 bg-blue-500 rounded-t-sm"
+                          style={{ height: `${val * 50}px` }} // Adjust height multiplier for better visualization
                           title={`${monthlyData.labels[i]}: ${val} tickets`}
-                        ></div>
-                        
-                        {/* Resolution time indicator */}
-                        <div 
-                          className="absolute bottom-0 left-0 right-0 border-t-2 border-green-500 border-dashed z-10"
-                          style={{ bottom: `${monthlyData.datasets.resolutionTime[i] * 4}px` }}
-                          title={`Avg Resolution: ${monthlyData.datasets.resolutionTime[i]} min`}
-                        ></div>
-                        
-                        {/* Satisfaction indicator - small circle */}
-                        <div 
-                          className="absolute w-3 h-3 rounded-full bg-yellow-500 z-20"
-                          style={{ 
-                            bottom: `${monthlyData.datasets.satisfaction[i] * 30}px`,
-                            left: '50%',
-                            transform: 'translateX(-50%)'
-                          }}
-                          title={`Satisfaction: ${monthlyData.datasets.satisfaction[i]}/5`}
-                        ></div>
-                        
-                        {/* SLA Compliance indicator - purple line */}
-                        <div 
-                          className="absolute bottom-0 left-0 right-0 border-t-2 border-purple-600 z-10"
-                          style={{ bottom: `${monthlyData.datasets.slaCompliance[i] * 1.5}px` }}
-                          title={`SLA Compliance: ${monthlyData.datasets.slaCompliance[i]}%`}
-                        ></div>
-                        
-                        {/* SLA Compliance marker */}
-                        <div 
-                          className="absolute w-2 h-2 bg-purple-600 rounded-sm z-20"
-                          style={{ 
-                            bottom: `${monthlyData.datasets.slaCompliance[i] * 1.5}px`,
-                            left: '50%',
-                            transform: 'translateX(-50%)'
-                          }}
                         ></div>
                       </div>
                     ))}
                   </div>
                 </div>
                 
-                <div className="mt-4 grid grid-cols-4 gap-4">
+                <div className="mt-4 grid grid-cols-1 gap-4">
                   <div className="text-center">
                     <div className="inline-block w-3 h-3 bg-blue-500 rounded-full mr-1"></div>
                     <span className="text-xs text-gray-600">Tickets Resolved</span>
-                  </div>
-                  <div className="text-center">
-                    <div className="inline-block w-3 h-3 bg-green-500 rounded-full mr-1"></div>
-                    <span className="text-xs text-gray-600">Resolution Time</span>
-                  </div>
-                  <div className="text-center">
-                    <div className="inline-block w-3 h-3 bg-yellow-500 rounded-full mr-1"></div>
-                    <span className="text-xs text-gray-600">Satisfaction</span>
-                  </div>
-                  <div className="text-center">
-                    <div className="inline-block w-3 h-3 bg-purple-500 rounded-full mr-1"></div>
-                    <span className="text-xs text-gray-600">SLA Compliance</span>
                   </div>
                 </div>
               </div>
@@ -323,56 +546,53 @@ const PerformanceReports = () => {
                 {/* Pie chart visualization */}
                 <div className="h-48 relative flex items-center justify-center mb-4">
                   <svg viewBox="0 0 100 100" className="w-full h-full max-w-[180px] max-h-[180px]">
-                    {/* Software Issues - 45% */}
-                    <circle cx="50" cy="50" r="45" fill="transparent" stroke="#3b82f6" strokeWidth="30" strokeDasharray="282.6 282.6" strokeDashoffset="0" transform="rotate(-90 50 50)" />
-                    
-                    {/* Hardware Issues - 30% */}
-                    <circle cx="50" cy="50" r="45" fill="transparent" stroke="#10b981" strokeWidth="30" strokeDasharray="282.6 282.6" strokeDashoffset="84.78" transform="rotate(-90 50 50)" />
-                    
-                    {/* Network Issues - 15% */}
-                    <circle cx="50" cy="50" r="45" fill="transparent" stroke="#eab308" strokeWidth="30" strokeDasharray="282.6 282.6" strokeDashoffset="169.56" transform="rotate(-90 50 50)" />
-                    
-                    {/* Other - 10% */}
-                    <circle cx="50" cy="50" r="45" fill="transparent" stroke="#8b5cf6" strokeWidth="30" strokeDasharray="282.6 282.6" strokeDashoffset="226.08" transform="rotate(-90 50 50)" />
-                    
+                    {categoryData.values.map((value, index) => {
+                      const offset = categoryData.values.slice(0, index).reduce((sum, val) => sum + val, 0);
+                      const strokeDashoffset = (282.6 * offset) / 100; // Adjust for percentage
+                      const colors = ['#3b82f6', '#10b981', '#eab308', '#8b5cf6']; // Example colors
+
+                      return (
+                        <circle
+                          key={index}
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          fill="transparent"
+                          stroke={colors[index % colors.length]}
+                          strokeWidth="30"
+                          strokeDasharray="282.6 282.6"
+                          strokeDashoffset={strokeDashoffset}
+                          transform="rotate(-90 50 50)"
+                        />
+                      );
+                    })}
+
                     {/* Center circle */}
                     <circle cx="50" cy="50" r="30" fill="white" />
-                    
+
                     {/* Center text */}
-                    <text x="50" y="48" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#374151">Category</text>
-                    <text x="50" y="58" textAnchor="middle" fontSize="8" fill="#6b7280">Distribution</text>
+                    <text x="50" y="48" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#374151">
+                      Category
+                    </text>
+                    <text x="50" y="58" textAnchor="middle" fontSize="8" fill="#6b7280">
+                      Distribution
+                    </text>
                   </svg>
                 </div>
                 
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                      <span className="text-sm text-gray-700">Software Issues</span>
+                  {categoryData.labels.map((label, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <div
+                          className="w-3 h-3 rounded-full mr-2"
+                          style={{ backgroundColor: ['#3b82f6', '#10b981', '#eab308', '#8b5cf6'][index % 4] }}
+                        ></div>
+                        <span className="text-sm text-gray-700">{label}</span>
+                      </div>
+                      <span className="text-sm font-medium">{categoryData.values[index]}%</span>
                     </div>
-                    <span className="text-sm font-medium">45%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                      <span className="text-sm text-gray-700">Hardware Issues</span>
-                    </div>
-                    <span className="text-sm font-medium">30%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-                      <span className="text-sm text-gray-700">Network Issues</span>
-                    </div>
-                    <span className="text-sm font-medium">15%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
-                      <span className="text-sm text-gray-700">Other</span>
-                    </div>
-                    <span className="text-sm font-medium">10%</span>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -399,84 +619,34 @@ const PerformanceReports = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Calendar size={16} className="text-gray-400 mr-2" />
-                        <span className="text-sm text-gray-900">March 2023</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">120</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">30 min</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <span className="text-sm text-gray-900 mr-1">4.8/5</span>
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star key={star} size={12} className={`${star <= 4.8 ? 'text-yellow-400' : 'text-gray-300'}`} />
-                          ))}
+                  {monthlyBreakdownData.map((row, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Calendar size={16} className="text-gray-400 mr-2" />
+                          <span className="text-sm text-gray-900">{row.month}</span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">98%</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        Excellent
-                      </span>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Calendar size={16} className="text-gray-400 mr-2" />
-                        <span className="text-sm text-gray-900">February 2023</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">115</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">32 min</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <span className="text-sm text-gray-900 mr-1">4.7/5</span>
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star key={star} size={12} className={`${star <= 4.7 ? 'text-yellow-400' : 'text-gray-300'}`} />
-                          ))}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.ticketsResolved}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.avgResolutionTime} min</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <span className="text-sm text-gray-900 mr-1">{row.customerRating}</span>
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star key={star} size={12} className={`${star <= parseFloat(row.customerRating) ? 'text-yellow-400' : 'text-gray-300'}`} />
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">95%</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        Excellent
-                      </span>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Calendar size={16} className="text-gray-400 mr-2" />
-                        <span className="text-sm text-gray-900">January 2023</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">108</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">35 min</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <span className="text-sm text-gray-900 mr-1">4.6/5</span>
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star key={star} size={12} className={`${star <= 4.6 ? 'text-yellow-400' : 'text-gray-300'}`} />
-                          ))}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">92%</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                        Good
-                      </span>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{row.slaCompliance}%</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${row.performance === 'Excellent' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                          {row.performance}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

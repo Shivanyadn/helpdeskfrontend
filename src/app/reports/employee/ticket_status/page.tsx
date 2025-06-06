@@ -1,65 +1,37 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EmployeeSidebar from '@/app/sidebar/EmployeeSidebar';
-import { ArrowLeft, FileText, Download, Calendar, Filter, Search, RefreshCw, ChevronDown, Clock, CheckCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Download, Calendar, Filter, Search, RefreshCw, ChevronDown, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import jsPDF from 'jspdf';
 
-// Sample report data
-const reports = [
-  {
-    id: 'REP001',
-    title: 'Monthly Ticket Summary',
-    description: 'Summary of all tickets created and resolved in the current month',
-    date: '2025-06-01',
-    type: 'Monthly',
-    status: 'Available',
-    metrics: {
-      totalTickets: 45,
-      resolvedTickets: 38,
-      avgResolutionTime: '1.8 days'
-    }
-  },
-  {
-    id: 'REP002',
-    title: 'Quarterly Performance Report',
-    description: 'Detailed analysis of ticket resolution times and satisfaction ratings',
-    date: '2025-04-01',
-    type: 'Quarterly',
-    status: 'Available',
-    metrics: {
-      totalTickets: 132,
-      resolvedTickets: 120,
-      avgResolutionTime: '2.1 days'
-    }
-  },
-  {
-    id: 'REP003',
-    title: 'Annual IT Asset Usage',
-    description: 'Overview of IT assets requested and utilized throughout the year',
-    date: '2025-01-15',
-    type: 'Annual',
-    status: 'Available',
-    metrics: {
-      totalTickets: 520,
-      resolvedTickets: 498,
-      avgResolutionTime: '2.5 days'
-    }
-  },
-  {
-    id: 'REP004',
-    title: 'Weekly Ticket Trends',
-    description: 'Analysis of ticket creation patterns and common issues',
-    date: '2025-06-07',
-    type: 'Weekly',
-    status: 'Processing',
-    metrics: {
-      totalTickets: 12,
-      resolvedTickets: 8,
-      avgResolutionTime: '1.2 days'
-    }
-  },
-];
+type Report = {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  type: string;
+  status: string;
+  metrics?: {
+    totalTickets: number;
+    resolvedTickets: number;
+    avgResolutionTime: string;
+  };
+  ticketId: string;
+  category: string;
+  priority: string;
+  createdAt: string;
+  assignedTo: {
+    firstName: string;
+    lastName: string;
+  };
+  resolution?: string;
+  attachments?: {
+    fileName: string;
+    fileType: string;
+  }[];
+};
 
 export default function EmployeeReportsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -67,6 +39,44 @@ export default function EmployeeReportsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedReport, setExpandedReport] = useState<string | null>(null);
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+        
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+        
+        const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+        
+        const response = await fetch('http://localhost:5000/api/tickets', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authToken,
+            'Accept': 'application/json',
+          },
+        });
+        if (!response.ok) {
+          throw new Error(`Error fetching reports: ${response.status}`);
+        }
+        const data = await response.json();
+        setReports(data);
+      } catch (err) {
+        console.error('Error fetching reports:', err);
+        setError('Failed to load reports. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, []);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -95,6 +105,59 @@ export default function EmployeeReportsPage() {
       report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       report.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+  const downloadReportAsPDF = (report: Report) => {
+    const doc = new jsPDF();
+
+    // Add a title and header
+    doc.setFontSize(18);
+    doc.text('Ticket Report', 105, 20, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
+    doc.line(10, 35, 200, 35); // Horizontal line
+
+    // Ticket Details
+    doc.setFontSize(14);
+    doc.text('Ticket Details', 10, 45);
+    doc.setFontSize(12);
+    doc.text(`Ticket ID: ${report.ticketId}`, 10, 55);
+    doc.text(`Title: ${report.title}`, 10, 65);
+    doc.text(`Description: ${report.description}`, 10, 75);
+    doc.text(`Category: ${report.category}`, 10, 85);
+    doc.text(`Priority: ${report.priority}`, 10, 95);
+    doc.text(`Status: ${report.status}`, 10, 105);
+    doc.text(`Created At: ${new Date(report.createdAt).toLocaleString()}`, 10, 115);
+
+    // Assigned To
+    doc.setFontSize(14);
+    doc.text('Assigned To', 10, 125);
+    doc.setFontSize(12);
+    doc.text(`${report.assignedTo.firstName} ${report.assignedTo.lastName}`, 10, 135);
+
+    // Resolution
+    if (report.status === 'Closed' && report.resolution) {
+      doc.setFontSize(14);
+      doc.text('Resolution', 10, 145);
+      doc.setFontSize(12);
+      doc.text(report.resolution, 10, 155);
+    }
+
+    // Attachments
+    if (report.attachments && report.attachments.length > 0) {
+      doc.setFontSize(14);
+      doc.text('Attachments', 10, 165);
+      doc.setFontSize(12);
+      report.attachments.forEach((attachment, index) => {
+        doc.text(`- ${attachment.fileName} (${attachment.fileType})`, 10, 175 + index * 10);
+      });
+    }
+
+    // Footer
+    doc.setFontSize(10);
+    doc.text(`Page 1 of 1`, 105, 290, { align: 'center' });
+
+    doc.save(`${report.ticketId}.pdf`);
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -171,11 +234,34 @@ export default function EmployeeReportsPage() {
           </div>
           
           {/* Reports Grid */}
-          {filteredReports.length > 0 ? (
+          {loading ? (
+            <div className="bg-white p-8 rounded-lg shadow-sm flex items-center justify-center border border-gray-100">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4">
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+                </div>
+                <p className="text-gray-600 font-medium">Loading reports...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+              <div className="text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-1">Error</h3>
+                <p className="text-gray-500 mb-4">{error}</p>
+                <button 
+                  onClick={refreshReports}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          ) : filteredReports.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {filteredReports.map((report) => (
                 <div 
-                  key={report.id} 
+                  key={report.id}
                   className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow"
                 >
                   <div className="border-b border-gray-100 px-6 py-4 flex justify-between items-center">
@@ -218,7 +304,7 @@ export default function EmployeeReportsPage() {
                         />
                       </div>
                       
-                      {expandedReport === report.id && (
+                      {expandedReport === report.id && report.metrics && (
                         <div className="mt-4 grid grid-cols-3 gap-4">
                           <div className="bg-gray-50 rounded-lg p-3 text-center">
                             <p className="text-xs text-gray-500 mb-1">Total Tickets</p>
@@ -237,8 +323,11 @@ export default function EmployeeReportsPage() {
                     </div>
                     
                     <div className="mt-6">
-                      {report.status === 'Available' ? (
-                        <button className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-lg transition-colors shadow-sm">
+                      {report.status === 'Available' || report.status === 'Closed' ? (
+                        <button 
+                          onClick={() => downloadReportAsPDF(report)}
+                          className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-lg transition-colors shadow-sm"
+                        >
                           <Download size={16} />
                           <span>Download Report</span>
                         </button>

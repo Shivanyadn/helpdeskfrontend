@@ -3,32 +3,27 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AgentSidebar from '@/app/sidebar/AgentSidebar';
-import { ArrowLeft, MessageSquare, Save, AlertCircle, CheckCircle, Clock, Paperclip, User } from 'lucide-react';
+import { ArrowLeft, Save, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 interface Ticket {
-  id: string;
-  subject: string;
+  ticketId: string;
+  title: string;
   description: string;
   status: string;
   priority: string;
-  assignedTo: string;
-  createdBy: string;
-  department: string;
+  assignedTo: { firstName: string; lastName: string } | null;
   createdAt: string;
-  updatedAt: string;
-  comments: string[];
 }
 
 export default function AgentUpdateTicketPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const ticketId = searchParams.get('id') || 'TKT-1001'; // Default ID if none provided
-  
+  const ticketId = searchParams.get('id') || 'TICKET-1'; // Default ID if none provided
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [loading, setLoading] = useState(false); // Changed to false to show data immediately
-  const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -37,49 +32,95 @@ export default function AgentUpdateTicketPage() {
   };
 
   useEffect(() => {
-    // Mock fetch ticket with expanded data - immediately available
-    const mockTicket: Ticket = {
-      id: ticketId,
-      subject: 'Printer not working in HR Dept',
-      description: 'The printer in the HR department shows a paper jam error repeatedly. I have tried turning it off and on, but the error persists. Need assistance as soon as possible as we have important documents to print.',
-      status: 'Open',
-      priority: 'Medium',
-      assignedTo: 'Agent Ravi',
-      createdBy: 'Employee Sarah Johnson',
-      department: 'HR',
-      createdAt: '2025-04-02',
-      updatedAt: '2025-04-03',
-      comments: [
-        'Requested model number from user',
-        'User replied: HP LaserJet Pro M404dn',
-        'Asked if there are any visible paper jams'
-      ],
+    const fetchTicketDetails = async () => {
+      try {
+        setLoading(true);
+
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+
+        const response = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error fetching ticket details: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('API Response:', data); // Debugging
+        setTicket(data.ticket); // Ensure you're setting the correct property
+      } catch (error) {
+        console.error('Error fetching ticket details:', error);
+        setTicket(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    // Set ticket data immediately
-    setTicket(mockTicket);
-    setLoading(false);
+    fetchTicketDetails();
   }, [ticketId]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!ticket) return;
 
     setSaving(true);
 
-    // Mock save with improved feedback
-    setTimeout(() => {
-      setSuccessMessage('Ticket updated successfully!');
+    try {
+      // Retrieve the token from localStorage
+      const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+
+      if (!token) {
+        throw new Error('Authorization token is missing. Please log in again.');
+      }
+
+      console.log('Authorization Token:', token); // Debugging
+
+      // Make the PATCH request to update the ticket
+      const response = await fetch('http://localhost:5000/api/tickets/update', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Add Bearer token for authorization
+        },
+        body: JSON.stringify({
+          ticketId: ticket.ticketId,
+          status: ticket.status,
+          priority: ticket.priority,
+        }),
+      });
+
+      console.log('Response Status:', response.status); // Debugging
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', errorData);
+        throw new Error(errorData.message || 'Failed to update the ticket');
+      }
+
+      const data = await response.json();
+      console.log('API Response:', data); // Debugging
+      setSuccessMessage(data.message || 'Ticket updated successfully!');
+      setTicket(data.ticket); // Update the ticket state with the response data
+    } catch (error) {
+      console.error('Fetch Error:', error);
+      setSuccessMessage('Failed to update the ticket. Please try again.');
+    } finally {
       setSaving(false);
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
-    }, 800);
+    }
   };
 
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'Open':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'In Progress':
@@ -94,7 +135,7 @@ export default function AgentUpdateTicketPage() {
   };
 
   const getPriorityColor = (priority: string) => {
-    switch(priority) {
+    switch (priority) {
       case 'Low':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'Medium':
@@ -108,27 +149,15 @@ export default function AgentUpdateTicketPage() {
     }
   };
 
-  const addComment = () => {
-    if (!ticket || !newComment.trim()) return;
-    
-    setTicket({
-      ...ticket,
-      comments: [...ticket.comments, newComment.trim()],
-      updatedAt: new Date().toISOString().split('T')[0]
-    });
-    setNewComment('');
-  };
-
   return (
     <>
       <AgentSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-[250px]' : 'ml-[80px]'} bg-gray-50 min-h-screen`}>
         <div className="p-6">
-          {/* Header with breadcrumb */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Update Ticket</h1>
             <div className="flex items-center gap-2">
-              <Link 
+              <Link
                 href={`/tickets/agent/view-ticket?id=${ticketId}`}
                 className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
               >
@@ -140,7 +169,6 @@ export default function AgentUpdateTicketPage() {
             </div>
           </div>
 
-          {/* Success message */}
           {successMessage && (
             <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
               <CheckCircle size={18} />
@@ -154,219 +182,63 @@ export default function AgentUpdateTicketPage() {
               <p className="text-gray-600">Loading ticket details...</p>
             </div>
           ) : ticket ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Main ticket information and edit form */}
-              <div className="lg:col-span-2 space-y-6">
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-gray-100">
-                    <h2 className="text-xl font-semibold text-gray-800">
-                      {ticket.subject}
-                    </h2>
-                    <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-100">
+                <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Left Column */}
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4">{ticket.title}</h2>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
                       <Clock size={14} />
-                      <span>Created: {ticket.createdAt}</span>
-                      <span className="mx-1">•</span>
-                      <span>Updated: {ticket.updatedAt}</span>
+                      <span>Created: {new Date(ticket.createdAt).toLocaleDateString()}</span>
                     </div>
-                  </div>
-                  
-                  <div className="p-6">
                     <h3 className="font-medium text-gray-700 mb-3">Description</h3>
                     <p className="text-gray-600 whitespace-pre-line mb-6">{ticket.description}</p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Status */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                        <select
-                          value={ticket.status}
-                          onChange={(e) => setTicket({ ...ticket, status: e.target.value })}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="Open">Open</option>
-                          <option value="In Progress">In Progress</option>
-                          <option value="Resolved">Resolved</option>
-                          <option value="Closed">Closed</option>
-                        </select>
-                      </div>
+                  </div>
 
-                      {/* Priority */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                        <select
-                          value={ticket.priority}
-                          onChange={(e) => setTicket({ ...ticket, priority: e.target.value })}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="Low">Low</option>
-                          <option value="Medium">Medium</option>
-                          <option value="High">High</option>
-                          <option value="Critical">Critical</option>
-                        </select>
-                      </div>
-                      
-                      {/* Department */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                        <select
-                          value={ticket.department}
-                          onChange={(e) => setTicket({ ...ticket, department: e.target.value })}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="IT Support">IT Support</option>
-                          <option value="HR">HR</option>
-                          <option value="Finance">Finance</option>
-                          <option value="Operations">Operations</option>
-                          <option value="Sales">Sales</option>
-                        </select>
-                      </div>
-                      
-                      {/* Assigned To */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
-                        <select
-                          value={ticket.assignedTo}
-                          onChange={(e) => setTicket({ ...ticket, assignedTo: e.target.value })}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="Agent Ravi">Agent Ravi</option>
-                          <option value="Agent Mike">Agent Mike</option>
-                          <option value="Agent Sarah">Agent Sarah</option>
-                          <option value="Agent John">Agent John</option>
-                        </select>
-                      </div>
+                  {/* Right Column */}
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                      <select
+                        value={ticket.status}
+                        onChange={(e) => setTicket({ ...ticket, status: e.target.value })}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Closed">Closed</option>
+                      </select>
                     </div>
-                  </div>
-                </div>
 
-                {/* Comments section */}
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-gray-100">
-                    <h3 className="font-medium text-gray-800 flex items-center gap-2">
-                      <MessageSquare size={16} />
-                      <span>Agent Comments ({ticket.comments.length})</span>
-                    </h3>
-                  </div>
-                  
-                  <div className="p-6">
-                    {ticket.comments.length > 0 ? (
-                      <div className="space-y-4 mb-6">
-                        {ticket.comments.map((comment, index) => (
-                          <div key={index} className="border-l-2 border-blue-500 pl-4 py-1">
-                            <p className="text-gray-600">{comment}</p>
-                            <p className="text-xs text-gray-400 mt-1">
-                              {new Date(new Date(ticket.createdAt).getTime() + (index * 24 * 60 * 60 * 1000)).toLocaleDateString()}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 italic mb-6">No comments yet</p>
-                    )}
-                    
-                    {/* Add comment form */}
-                    <div className="border-t border-gray-100 pt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Add Comment</label>
-                      <textarea 
-                        className="w-full border border-gray-200 rounded-lg p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Add a comment..."
-                        rows={3}
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                      ></textarea>
-                      <div className="flex justify-between mt-3">
-                        <button className="flex items-center gap-1 text-gray-500 hover:text-gray-700">
-                          <Paperclip size={14} />
-                          <span>Attach</span>
-                        </button>
-                        <button 
-                          onClick={addComment}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                          disabled={!newComment.trim()}
-                        >
-                          Add Comment
-                        </button>
-                      </div>
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                      <select
+                        value={ticket.priority}
+                        onChange={(e) => setTicket({ ...ticket, priority: e.target.value })}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                      </select>
                     </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Ticket details sidebar */}
-              <div className="space-y-6">
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-gray-100">
-                    <h3 className="font-medium text-gray-800">Ticket Details</h3>
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
+                      <p className="text-gray-700">{ticket.assignedTo?.firstName || 'Unassigned'}</p>
+                    </div>
+
+                    <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full"
+                    >
+                      {saving ? 'Saving Changes...' : 'Save Changes'}
+                    </button>
                   </div>
-                  
-                  <div className="p-6 space-y-4">
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Current Status</p>
-                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                        {ticket.status}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Current Priority</p>
-                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
-                        {ticket.priority}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Created By</p>
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                          <User size={12} className="text-gray-600" />
-                        </div>
-                        <p className="text-gray-700">{ticket.createdBy}</p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Created On</p>
-                      <p className="text-gray-700">{ticket.createdAt}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Last Updated</p>
-                      <p className="text-gray-700">{ticket.updatedAt}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Action buttons */}
-                <div className="bg-white rounded-xl shadow-sm p-6 space-y-3">
-                  <button 
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Save size={16} />
-                    {saving ? 'Saving Changes...' : 'Save Changes'}
-                  </button>
-                  
-                  <Link 
-                    href={`/tickets/agent/view-ticket?id=${ticketId}`}
-                    className="w-full border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors text-center block"
-                  >
-                    Cancel
-                  </Link>
-                </div>
-                
-                {/* Help card */}
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                  <h4 className="text-sm font-medium text-blue-800 mb-2 flex items-center gap-1.5">
-                    <AlertCircle size={14} />
-                    Ticket Update Tips
-                  </h4>
-                  <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
-                    <li>Update the status to reflect current progress</li>
-                    <li>Add detailed comments for better tracking</li>
-                    <li>Adjust priority based on urgency</li>
-                    <li>Reassign ticket if needed</li>
-                  </ul>
                 </div>
               </div>
             </div>
@@ -377,7 +249,7 @@ export default function AgentUpdateTicketPage() {
               </div>
               <h3 className="text-lg font-medium text-gray-800 mb-2">Ticket Not Found</h3>
               <p className="text-gray-600 mb-6">The ticket you're trying to update doesn't exist or has been removed.</p>
-              <Link 
+              <Link
                 href="/tickets/agent"
                 className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
@@ -385,6 +257,28 @@ export default function AgentUpdateTicketPage() {
               </Link>
             </div>
           )}
+
+          <div className="mt-10 bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Instructions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-medium text-gray-700 mb-2">For Updating Ticket</h3>
+                <ul className="list-disc list-inside text-gray-600">
+                  <li>Ensure all fields are filled out correctly.</li>
+                  <li>Update the status and priority as needed.</li>
+                  <li>Provide a detailed description of the changes.</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-700 mb-2">For Saving Changes</h3>
+                <ul className="list-disc list-inside text-gray-600">
+                  <li>Click the "Save Changes" button after making updates.</li>
+                  <li>Wait for the confirmation message to appear.</li>
+                  <li>Navigate back to the ticket list if needed.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

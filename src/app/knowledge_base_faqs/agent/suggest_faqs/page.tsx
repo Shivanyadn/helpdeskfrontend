@@ -23,34 +23,62 @@ const SuggestFAQsPage = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!suggestion.question.trim()) {
       setError('Question field is required');
       return;
     }
-    
+
     if (!suggestion.answer.trim()) {
       setError('Answer field is required');
       return;
     }
-    
+
     setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      // Here you would send the suggestion to an API
-      console.log('Suggested FAQ:', suggestion);
+
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+
+      if (!token) {
+        throw new Error('Authorization token is missing. Please log in again.');
+      }
+
+      const response = await fetch('http://localhost:5001/api/articles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: suggestion.question,
+          content: suggestion.answer,
+          category: suggestion.category,
+          tags: suggestion.tags.split(',').map(tag => tag.trim()), // Convert comma-separated tags to an array
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to submit suggestion: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('API Response:', data);
+
       setLoading(false);
       setSubmitted(true);
-      
+
       // Reset form after submission
       setTimeout(() => {
         setSuggestion({ question: '', answer: '', category: 'general', tags: '' });
         setSubmitted(false);
       }, 5000);
-    }, 1000);
+    } catch (error) {
+      console.error('Error submitting suggestion:', error);
+      setError('Failed to submit the suggestion. Please try again.');
+      setLoading(false);
+    }
   };
 
   const categories = [

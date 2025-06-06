@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useEffect } from 'react';
 import AgentSidebar from '@/app/sidebar/AgentSidebar';
 import { BarChart3, PieChart, LineChart, Clock, AlertTriangle, MessageSquare, ThumbsUp, Download } from 'lucide-react';
+import axios from 'axios';
 import {
   Chart as ChartJS,
   CategoryScale, LinearScale, BarElement, Title, 
@@ -34,18 +35,29 @@ const AgentAnalyticsPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeChart, setActiveChart] = useState('tickets');
   const [timeRange, setTimeRange] = useState('month');
-
-  // Chart data
-  const chartData = {
+  const [ticketMetrics, setTicketMetrics] = useState({
+    totalAssigned: 0,
+    open: 0,
+    inProgress: 0,
+    closed: 0,
+    slaAtRisk: 0,
+    avgResolutionTime: 0,
+    feedbackScore: 0,
+    responseRate: '0%',
+    performanceScore: 0,
+  });
+  const [chartData, setChartData] = useState({
     tickets: {
-      labels: ['Open', 'In Progress', 'Pending', 'Resolved', 'Closed'],
-      datasets: [{
-        label: 'Number of Tickets',
-        data: [12, 19, 8, 15, 24],
-        backgroundColor: 'rgb(59 130 246 / 0.6)',
-        borderColor: 'rgb(59 130 246)',
-        borderWidth: 1,
-      }],
+      labels: ['Assigned', 'In Progress', 'Closed'],
+      datasets: [
+        {
+          label: 'Number of Tickets',
+          data: [0, 0, 0], // Default values, will be updated dynamically
+          backgroundColor: 'rgb(59 130 246 / 0.6)',
+          borderColor: 'rgb(59 130 246)',
+          borderWidth: 1,
+        },
+      ],
       options: {
         responsive: true,
         plugins: {
@@ -73,20 +85,22 @@ const AgentAnalyticsPage = () => {
       }
     },
     categories: {
-      labels: ['Hardware', 'Software', 'Network', 'Account Access', 'Email', 'Other'],
-      datasets: [{
-        label: 'Tickets by Category',
-        data: [25, 32, 18, 15, 22, 8],
-        backgroundColor: [
-          'rgb(59 130 246 / 0.6)', 'rgb(16 185 129 / 0.6)', 'rgb(245 158 11 / 0.6)',
-          'rgb(239 68 68 / 0.6)', 'rgb(139 92 246 / 0.6)', 'rgb(236 72 153 / 0.6)',
-        ],
-        borderColor: [
-          'rgb(59 130 246)', 'rgb(16 185 129)', 'rgb(245 158 11)',
-          'rgb(239 68 68)', 'rgb(139 92 246)', 'rgb(236 72 153)',
-        ],
-        borderWidth: 1,
-      }],
+      labels: ['IT Support', 'Network Issue'], // Categories from the API
+      datasets: [
+        {
+          label: 'Tickets by Category',
+          data: [3, 1], // Ticket counts for each category
+          backgroundColor: [
+            'rgb(59 130 246 / 0.6)', 'rgb(16 185 129 / 0.6)', 'rgb(245 158 11 / 0.6)',
+            'rgb(239 68 68 / 0.6)', 'rgb(139 92 246 / 0.6)', 'rgb(236 72 153 / 0.6)',
+          ],
+          borderColor: [
+            'rgb(59 130 246)', 'rgb(16 185 129)', 'rgb(245 158 11)',
+            'rgb(239 68 68)', 'rgb(139 92 246)', 'rgb(236 72 153)',
+          ],
+          borderWidth: 1,
+        },
+      ],
       options: {
         responsive: true,
         plugins: {
@@ -95,19 +109,116 @@ const AgentAnalyticsPage = () => {
         },
       }
     }
-  };
+  });
 
-  // Ticket metrics data
-  const ticketMetrics = {
-    totalAssigned: 78,
-    open: 12,
-    inProgress: 19,
-    closed: 47,
-    slaAtRisk: 3,
-    avgResolutionTime: '3.8 hours',
-    feedbackScore: 4.7,
-    responseRate: '92%'
-  };
+  // Fetch ticket metrics data
+  useEffect(() => {
+    const fetchTicketMetrics = async () => {
+      try {
+        // Retrieve the token from localStorage
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+
+        // Fetch ticket analytics data
+        const analyticsResponse = await axios.get('http://localhost:5000/api/tickets/analytics', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Fetch resolution times data
+        const resolutionResponse = await axios.get('http://localhost:5000/api/tickets/resolution-times', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Fetch tickets data for categories
+        const ticketsResponse = await axios.get('http://localhost:5000/api/tickets', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (analyticsResponse.data.success && resolutionResponse.data.success && ticketsResponse.data) {
+          const performance = analyticsResponse.data.performance[0] || {};
+          const slaBreaches = analyticsResponse.data.slaBreaches || [];
+          const tickets = ticketsResponse.data;
+
+          // Calculate the average resolution time
+          const resolutionTimes = resolutionResponse.data.resolutionTimes || [];
+          const totalResolutionTime = resolutionTimes.reduce((sum: number, item: { resolutionTimeInHours: string }) => {
+            return sum + parseFloat(item.resolutionTimeInHours);
+          }, 0);
+          const avgResolutionTime = resolutionTimes.length > 0 ? parseFloat((totalResolutionTime / resolutionTimes.length).toFixed(2)) : 0;
+
+          // Group tickets by category
+          const categoryCounts = tickets.reduce((acc: Record<string, number>, ticket: { category: string }) => {
+            acc[ticket.category] = (acc[ticket.category] || 0) + 1;
+            return acc;
+          }, {});
+
+          // Update the ticketMetrics state
+          setTicketMetrics({
+            totalAssigned: performance.assigned || 0,
+            open: performance.assigned - (performance.inProgress + performance.closed) || 0,
+            inProgress: performance.inProgress || 0,
+            closed: performance.closed || 0,
+            slaAtRisk: slaBreaches.length || 0,
+            avgResolutionTime: avgResolutionTime,
+            feedbackScore: analyticsResponse.data.feedbackScore || 0,
+            responseRate: analyticsResponse.data.responseRate || '0%',
+            performanceScore: parseFloat(performance.performanceScore) || 0,
+          });
+
+          // Update the chart data for the bar graph
+          setChartData((prevData) => ({
+            ...prevData,
+            tickets: {
+              ...prevData.tickets,
+              datasets: [
+                {
+                  ...prevData.tickets.datasets[0],
+                  data: [
+                    performance.assigned || 0,
+                    performance.inProgress || 0,
+                    performance.closed || 0,
+                  ],
+                },
+              ],
+            },
+            resolution: {
+              ...prevData.resolution,
+              labels: resolutionTimes.map((item: { title: string }) => item.title), // Use ticket titles as labels
+              datasets: [
+                {
+                  ...prevData.resolution.datasets[0],
+                  data: resolutionTimes.map((item: { resolutionTimeInHours: string }) => parseFloat(item.resolutionTimeInHours)), // Use resolution times as data
+                },
+              ],
+            },
+            categories: {
+              ...prevData.categories,
+              labels: Object.keys(categoryCounts), // Use category names as labels
+              datasets: [
+                {
+                  ...prevData.categories.datasets[0],
+                  data: Object.values(categoryCounts), // Use ticket counts as data
+                },
+              ],
+            },
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching ticket metrics:', error);
+        alert('Failed to fetch ticket metrics. Please try again later.');
+      }
+    };
+
+    fetchTicketMetrics();
+  }, []);
 
   // Recent activities
   const recentActivities = [
@@ -221,12 +332,12 @@ const AgentAnalyticsPage = () => {
               </footer>
             </article>
 
-            {/* Feedback Score */}
+            {/* Performance Score */}
             <article className={cardStyles.purple}>
               <header className="flex justify-between items-start">
                 <hgroup>
-                  <p className="text-sm font-medium text-gray-500">Customer Feedback</p>
-                  <h3 className="text-2xl font-bold text-gray-800 mt-2">{ticketMetrics.feedbackScore}/5</h3>
+                  <p className="text-sm font-medium text-gray-500">Performance Score</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mt-2">{ticketMetrics.performanceScore}/100</h3>
                 </hgroup>
                 <span className={iconStyles.purple}>
                   <ThumbsUp className="h-6 w-6 text-purple-600" />
@@ -354,5 +465,4 @@ const AgentAnalyticsPage = () => {
     </>
   );
 };
-
 export default AgentAnalyticsPage;

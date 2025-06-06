@@ -84,6 +84,9 @@ export default function ViewTicketPage() {
       // Get auth token from localStorage
       const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
       
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
       // Make the API request to resolve the ticket
       const response = await fetch(`http://localhost:5000/api/tickets/${ticketId}/resolve`, {
         method: 'PUT',
@@ -220,14 +223,23 @@ export default function ViewTicketPage() {
 
       try {
         // Use the API function to fetch the ticket
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+        
+        const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+        
+        console.log('Auth Token:', authToken); // Debugging line
+        console.log('Fetching from URL:', 'http://localhost:5000/api/tickets/${ticketId}');
+        
         const response = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': localStorage.getItem('token') || localStorage.getItem('auth_token') || '',
-            'Accept': 'application/json'
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
           },
-          credentials: 'include'
         });
 
         if (!response.ok) {
@@ -461,12 +473,13 @@ export default function ViewTicketPage() {
               {/* Sidebar with additional info - Moved to left for better UX */}
               <div className="lg:col-span-1 space-y-5">
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
-                  <div className="border-b border-gray-100 px-4 py-3 bg-gray-50">
+                  <div className="border-b border-gray-100 px-4 py-3 bg-gray-50 flex items-center justify-between">
                     <h2 className="font-semibold text-gray-800">Ticket Information</h2>
+                    <button className="text-blue-600 hover:text-blue-800 transition-colors text-sm font-medium">Edit</button>
                   </div>
                   
                   <div className="p-4 space-y-4">
-                    <div>
+                    <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Ticket ID</h3>
                       <div className="flex items-center">
                         <Tag size={14} className="text-blue-500 mr-2" />
@@ -474,7 +487,7 @@ export default function ViewTicketPage() {
                       </div>
                     </div>
                     
-                    <div>
+                    <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Assigned Agent</h3>
                       <div className="flex items-center">
                         <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center mr-2">
@@ -484,17 +497,17 @@ export default function ViewTicketPage() {
                       </div>
                     </div>
                     
-                    <div>
+                    <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Department</h3>
                       <span className="text-gray-800">{ticket.department}</span>
                     </div>
                     
-                    <div>
+                    <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Category</h3>
                       <span className="text-gray-800">{ticket.category}</span>
                     </div>
                     
-                    <div>
+                    <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-gray-500 mb-1">Created On</h3>
                       <div className="flex items-center">
                         <Calendar size={14} className="text-blue-500 mr-2" />
@@ -502,7 +515,7 @@ export default function ViewTicketPage() {
                       </div>
                     </div>
                     
-                    <div>
+                    <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-gray-500 mb-1">SLA Due</h3>
                       <div className="flex items-center">
                         <Clock size={14} className="text-blue-500 mr-2" />

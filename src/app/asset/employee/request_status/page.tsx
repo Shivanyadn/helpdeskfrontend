@@ -54,8 +54,7 @@ export default function RequestStatusPage() {
     setError(null);
     
     try {
-      // Get auth token from localStorage directly instead of using the non-exported function
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
       
       if (!token) {
         throw new Error('Authentication token not found. Please log in again.');
@@ -63,15 +62,24 @@ export default function RequestStatusPage() {
       
       const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
       
+      console.log('Auth Token:', authToken); // Debugging line
+      console.log('Fetching from URL:', 'http://localhost:5005/api/servicerequest/requests'); // Debugging line
+      
       const response = await fetch('http://localhost:5005/api/servicerequest/requests', {
         method: 'GET',
         headers: {
-          'Authorization': authToken,
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
         },
       });
       
+      console.log('Response Status:', response.status); // Debugging line
+      console.log('Response Headers:', response.headers); // Debugging line
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error Response Text:', errorText); // Debugging line
         throw new Error(`Error: ${response.status}`);
       }
       

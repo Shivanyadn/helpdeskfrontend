@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -20,7 +20,26 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const pathname = usePathname();
-  
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Load theme preference from local storage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+    }
+  }, []);
+
+  // Toggle theme and save preference
+  const toggleTheme = () => {
+    setIsDarkMode(prevMode => {
+      const newMode = !prevMode;
+      localStorage.setItem('theme', newMode ? 'dark' : 'light');
+      document.documentElement.classList.toggle('dark', newMode);
+      return newMode;
+    });
+  };
+
   const menuItems = [
     { icon: Home, label: 'Dashboard', href: '/dashboard/agent' },
     { icon: Ticket, label: 'Tickets', href: '/tickets/agent' },
@@ -32,9 +51,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
 
   return (
     <div 
-      className={`fixed top-0 left-0 h-full bg-white border-r border-slate-200 transition-all duration-300 z-10 ${
+      className={`fixed top-0 left-0 h-full transition-all duration-300 z-10 ${
         isOpen ? 'w-[250px]' : 'w-[80px]'
-      }`}
+      } ${isDarkMode ? 'dark bg-gray-800 text-white' : 'bg-white text-black'} border-r border-slate-200`}
     >
       <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200">
         <div className="flex items-center">
@@ -44,12 +63,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             <span className="text-xl font-bold text-indigo-600">🔧</span>
           )}
         </div>
-        <button 
-          onClick={toggleSidebar}
-          className="p-2 rounded-full hover:bg-slate-100 text-slate-500"
-        >
-          {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-        </button>
+        <div className="flex items-center">
+          <button 
+            onClick={toggleTheme}
+            className="p-2 rounded-full hover:bg-slate-100 text-slate-500"
+          >
+            {isDarkMode ? '🌙' : '☀️'}
+          </button>
+          <button 
+            onClick={toggleSidebar}
+            className="p-2 rounded-full hover:bg-slate-100 text-slate-500"
+          >
+            {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          </button>
+        </div>
       </div>
       
       <div className="py-4">

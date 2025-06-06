@@ -8,12 +8,12 @@ const ManagerSidebar = lazy(() => import('@/app/sidebar/ManagerSidebar'));
 interface Ticket {
   id: string;
   subject: string;
-  assignee: string;
+  assignee: string | null;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
   createdAt: string;
-  employeeName: string;
-  department: string;
+  employeeName?: string;
+  department?: string;
 }
 
 const ManagerMonitorTickets = () => {
@@ -24,16 +24,37 @@ const ManagerMonitorTickets = () => {
 
   useEffect(() => {
     const fetchTickets = async () => {
-      // Simulate API fetch with mock data
-      const mockTickets: Ticket[] = [
-        { id: 'T1001', subject: 'System outage', assignee: 'Agent A', priority: 'Critical', status: 'Open', createdAt: '2025-04-01', employeeName: 'John Smith', department: 'Finance' },
-        { id: 'T1002', subject: 'Password reset', assignee: 'Agent B', priority: 'Low', status: 'Resolved', createdAt: '2025-04-03', employeeName: 'Sarah Johnson', department: 'HR' },
-        { id: 'T1003', subject: 'Software installation', assignee: 'Agent A', priority: 'Medium', status: 'In Progress', createdAt: '2025-04-04', employeeName: 'Mike Davis', department: 'IT' },
-        { id: 'T1004', subject: 'Data access issue', assignee: 'Agent C', priority: 'High', status: 'Open', createdAt: '2025-04-02', employeeName: 'Lisa Wong', department: 'Marketing' },
-        { id: 'T1005', subject: 'Email configuration', assignee: 'Agent B', priority: 'Medium', status: 'In Progress', createdAt: '2025-04-05', employeeName: 'Robert Chen', department: 'Sales' },
-        { id: 'T1006', subject: 'Network connectivity', assignee: 'Agent C', priority: 'High', status: 'Open', createdAt: '2025-04-06', employeeName: 'Emma Taylor', department: 'Operations' },
-      ];
-      setTickets(mockTickets);
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+
+        const response = await fetch('http://localhost:5000/api/tickets', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error fetching tickets: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const formattedTickets = data.map((ticket: any) => ({
+          id: ticket.ticketId,
+          subject: ticket.title,
+          assignee: ticket.assignedTo ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}` : 'Unassigned',
+          priority: ticket.priority,
+          status: ticket.status,
+          createdAt: ticket.createdAt,
+        }));
+
+        setTickets(formattedTickets);
+      } catch (error) {
+        console.error('Error fetching tickets:', error);
+      }
     };
 
     fetchTickets();
@@ -68,8 +89,7 @@ const ManagerMonitorTickets = () => {
     (searchTerm === '' ||
       ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.assignee.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.employeeName.toLowerCase().includes(searchTerm.toLowerCase()))
+      ticket.assignee.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const statusCounts = {
@@ -91,7 +111,6 @@ const ManagerMonitorTickets = () => {
             <h1 className="text-3xl font-bold text-gray-800">Ticket Monitoring Dashboard</h1>
             <p className="text-gray-600">Track and manage team ticket assignments</p>
           </div>
-
 
           {/* Status Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -202,8 +221,8 @@ const ManagerMonitorTickets = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{ticket.employeeName}</div>
-                        <div className="text-sm text-gray-500">{ticket.department}</div>
+                        <div className="text-sm text-gray-900">{ticket.employeeName || 'N/A'}</div>
+                        <div className="text-sm text-gray-500">{ticket.department || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{ticket.assignee}</div>
@@ -220,7 +239,7 @@ const ManagerMonitorTickets = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {ticket.createdAt}
+                        {new Date(ticket.createdAt).toLocaleDateString()}
                       </td>
                     </tr>
                   ))

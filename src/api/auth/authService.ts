@@ -1,7 +1,7 @@
 import { ApiResponse } from '../types';
 import { storeAuthToken } from '../tickets';
 
-const API_URL = 'https://sso.zenapi.co.in';
+const API_URL = 'https://sso.zenapi.co.in/api';
 
 export interface LoginCredentials {
   username: string;
@@ -19,35 +19,41 @@ const storeUserData = (response: any) => {
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<ApiResponse<any>> => {
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(credentials),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.message || 'Login failed',
-        };
-      }
+        // Log the response and data for debugging
+        console.log('Response:', response);
+        console.log('Data:', data);
 
-      // Store token and user data after successful login
-      storeUserData(data);
-      
-      return {
-        success: true,
-        data: data,
-      };
+        // Check if the response contains the required fields
+        if (response.ok && data.accessToken && data.user) {
+            // Store token and user data after successful login
+            storeUserData(data);
+
+            return {
+                success: true,
+                data: data,
+            };
+        } else {
+            return {
+                success: false,
+                error: data.message || 'Login failed',
+            };
+        }
     } catch (error) {
-      return {
-        success: false,
-        error: 'An error occurred during login',
-      };
+        console.error('Error during login:', error);
+        return {
+            success: false,
+            error: 'An error occurred during login',
+        };
     }
   },
   

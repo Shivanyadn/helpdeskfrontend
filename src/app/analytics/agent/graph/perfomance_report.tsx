@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   Download, Filter, RefreshCw, Clock, CheckCircle, 
   AlertTriangle, MessageCircle, Star, Award,
@@ -10,12 +11,64 @@ import {
 export default function AgentPerformanceReport() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter'>('month');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+  const [resolvedTickets, setResolvedTickets] = useState(0); // State for resolved tickets
+  const [avgResolutionTime, setAvgResolutionTime] = useState(0); // State for average resolution time
+
   const refreshData = () => {
     setIsRefreshing(true);
     setTimeout(() => setIsRefreshing(false), 800);
   };
-  
+
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      try {
+        // Retrieve the token from localStorage
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+        if (!token) {
+          throw new Error('Authentication token not found. Please log in again.');
+        }
+
+        // Fetch analytics data
+        const analyticsResponse = await axios.get('http://localhost:5000/api/tickets/analytics', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (analyticsResponse.data.success) {
+          const performance = analyticsResponse.data.performance[0] || {};
+          setResolvedTickets(performance.closed || 0); // Update resolved tickets count
+        }
+
+        // Fetch resolution times data
+        const resolutionResponse = await axios.get('http://localhost:5000/api/tickets/resolution-times', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (resolutionResponse.data.success) {
+          const resolutionTimes = resolutionResponse.data.resolutionTimes || [];
+          const totalResolutionTime = resolutionTimes.reduce(
+            (sum: number, item: { resolutionTimeInHours: string }) =>
+              sum + parseFloat(item.resolutionTimeInHours),
+            0
+          );
+          const averageTime =
+            resolutionTimes.length > 0
+              ? parseFloat((totalResolutionTime / resolutionTimes.length).toFixed(2))
+              : 0;
+          setAvgResolutionTime(averageTime); // Update average resolution time
+        }
+      } catch (error) {
+        console.error('Error fetching analytics data:', error);
+        alert('Failed to fetch analytics data. Please try again later.');
+      }
+    };
+
+    fetchAnalyticsData();
+  }, []);
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto bg-gray-50">
       {/* Header */}
@@ -57,32 +110,26 @@ export default function AgentPerformanceReport() {
       <div className="card mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="section-title">
-            <TrendingUp className="h-5 w-5 text-blue-600" />
             Performance Overview
           </h2>
-          <a href="/analytics/agent/graph" className="text-blue-600 text-sm flex items-center hover:underline">
-            <BarChart size={16} className="mr-1" />
-            View Analytics
-          </a>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: 'Tickets Assigned', value: '48', change: '+12%', color: 'green', border: 'blue' },
-            { label: 'Resolution Time', value: '1.8 hrs', change: '-10%', color: 'green', border: 'green' },
-            { label: 'Satisfaction Score', value: '4.7/5', change: '+2%', color: 'green', border: 'purple' },
-            { label: 'SLA Compliance', value: '89.6%', change: '-2.4%', color: 'red', border: 'amber' }
-          ].map((metric, i) => (
-            <div key={i} className={`flex flex-col p-3 border-l-4 border-${metric.border}-500 bg-${metric.border}-50 rounded-lg`}>
-              <span className="text-sm text-gray-500">{metric.label}</span>
-              <div className="flex items-baseline">
-                <span className="text-xl font-bold mr-2 text-gray-800">{metric.value}</span>
-                <span className={`text-xs px-1.5 py-0.5 bg-${metric.color}-100 text-${metric.color}-600 rounded-full`}>
-                  {metric.change}
-                </span>
-              </div>
+          {/* Tickets Resolved */}
+          <div className="flex flex-col p-3 border-l-4 border-green-500 bg-green-50 rounded-lg">
+            <span className="text-sm text-gray-500">Tickets Resolved</span>
+            <div className="flex items-baseline">
+              <span className="text-xl font-bold mr-2 text-gray-800">{resolvedTickets}</span>
             </div>
-          ))}
+          </div>
+
+          {/* Average Resolution Time */}
+          <div className="flex flex-col p-3 border-l-4 border-blue-500 bg-blue-50 rounded-lg">
+            <span className="text-sm text-gray-500">Average Resolution Time</span>
+            <div className="flex items-baseline">
+              <span className="text-xl font-bold mr-2 text-gray-800">{avgResolutionTime} hrs</span>
+            </div>
+          </div>
         </div>
       </div>
       

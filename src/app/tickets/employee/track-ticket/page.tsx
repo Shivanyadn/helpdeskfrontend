@@ -271,6 +271,41 @@ export default function TrackTicketPage() {
     }
   };
 
+  const fetchTicketById = async (ticketId: string) => {
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+      const response = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Ensure this is correctly formatted
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching ticket: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data.success || !data.ticket) {
+        throw new Error('Invalid API response format');
+      }
+
+      setTickets((prevTickets) => {
+        // Update the specific ticket in the list
+        return prevTickets.map(ticket => 
+          ticket.id === data.ticket.id ? data.ticket : ticket
+        );
+      });
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching ticket by ID:', err);
+      setError('Failed to load ticket details. Please try again later.');
+    }
+  };
+
   return (
     <div className="flex h-screen bg-slate-100">
       <EmployeeSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
@@ -851,6 +886,8 @@ export default function TrackTicketPage() {
               bgColor = 'bg-amber-50 border-amber-200';
               textColor = 'text-amber-800';
               iconColor = 'text-amber-500';
+            } else {
+              iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="' + iconColor + '"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
             }
             
             notification.className = \`\${bgColor} \${textColor} p-4 rounded-lg shadow-md border flex items-start gap-3 animate-fade-in\`;
