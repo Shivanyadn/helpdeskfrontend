@@ -403,7 +403,7 @@ export default function ViewTicketPage() {
                   e.preventDefault();
                   const searchInput = e.currentTarget.elements.namedItem('ticketSearch') as HTMLInputElement;
                   if (searchInput.value.trim()) {
-                    window.location.href = `/tickets/employee/view-ticket?id=${searchInput.value.trim()}`;
+                    window.location.href = `/v1/helpdesk/tickets/employee/view-ticket?id=${searchInput.value.trim()}`;
                   }
                 }}>
                   <div className="flex">

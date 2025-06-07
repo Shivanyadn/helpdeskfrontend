@@ -6,7 +6,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://help.zenapi.co.in/api/:path*',
+        destination: 'https://help.zenapi.co.in/:path*',
       },
     ];
   },
