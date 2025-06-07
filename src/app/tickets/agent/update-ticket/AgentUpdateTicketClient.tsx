@@ -1,10 +1,9 @@
-// src/app/tickets/agent/update-ticket/AgentUpdateTicketClient.tsx
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams} from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AgentSidebar from '@/app/sidebar/AgentSidebar';
-import { ArrowLeft, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft,AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 interface Ticket {
@@ -17,45 +16,46 @@ interface Ticket {
   createdAt: string;
 }
 
-export default function AgentUpdateTicketClient() {
+export default function AgentUpdateTicketPage() {
   const searchParams = useSearchParams();
-  const ticketId = searchParams.get('id');
+  const ticketId = searchParams.get('id') || 'TICKET-1'; // Default ID if none provided
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   useEffect(() => {
-    if (!ticketId) return;
-
     const fetchTicketDetails = async () => {
       try {
         setLoading(true);
-        const token =
-          localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
 
-        const response = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
+
+        const response = await fetch(`https://help.zenapi.co.in/api/tickets/${ticketId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            'Authorization': `Bearer ${token}`,
           },
+          credentials: 'include',
         });
 
-        if (!response.ok) throw new Error(`Error fetching ticket: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`Error fetching ticket details: ${response.status}`);
+        }
 
         const data = await response.json();
-        setTicket(data.ticket);
-        setErrorMessage('');
-      } catch (err) {
-        console.error(err);
+        console.log('API Response:', data); // Debugging
+        setTicket(data.ticket); // Ensure you're setting the correct property
+      } catch (error) {
+        console.error('Error fetching ticket details:', error);
         setTicket(null);
-        setErrorMessage('Could not load ticket. Please check the ticket ID.');
       } finally {
         setLoading(false);
       }
@@ -68,19 +68,23 @@ export default function AgentUpdateTicketClient() {
     if (!ticket) return;
 
     setSaving(true);
-    setSuccessMessage('');
-    setErrorMessage('');
 
     try {
-      const token =
-        localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
-      if (!token) throw new Error('Missing token');
+      // Retrieve the token from localStorage
+      const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
 
-      const response = await fetch(`http://localhost:5000/api/tickets/update`, {
+      if (!token) {
+        throw new Error('Authorization token is missing. Please log in again.');
+      }
+
+      console.log('Authorization Token:', token); // Debugging
+
+      // Make the PATCH request to update the ticket
+      const response = await fetch('https://help.zenapi.co.in/api/tickets/update', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Add Bearer token for authorization
         },
         body: JSON.stringify({
           ticketId: ticket.ticketId,
@@ -89,66 +93,56 @@ export default function AgentUpdateTicketClient() {
         }),
       });
 
+      console.log('Response Status:', response.status); // Debugging
+
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || 'Failed to update ticket');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', errorData);
+        throw new Error(errorData.message || 'Failed to update the ticket');
       }
 
-      const result = await response.json();
-      setTicket(result.ticket);
-      setSuccessMessage(result.message || 'Ticket updated successfully');
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error('Fetch Error:', error.message);
-        setErrorMessage('Failed to update the ticket. Please try again.');
-      } else {
-        console.error('Unknown error occurred:', error);
-        setErrorMessage('An unexpected error occurred.');
-      }
+      const data = await response.json();
+      console.log('API Response:', data); // Debugging
+      setSuccessMessage(data.message || 'Ticket updated successfully!');
+      setTicket(data.ticket); // Update the ticket state with the response data
+    } catch (error) {
+      console.error('Fetch Error:', error);
+      setSuccessMessage('Failed to update the ticket. Please try again.');
     } finally {
       setSaving(false);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
     }
   };
+
 
   return (
     <>
       <AgentSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-      <div
-        className={`transition-all duration-300 ${
-          sidebarOpen ? 'ml-[250px]' : 'ml-[80px]'
-        } bg-gray-50 min-h-screen`}
-      >
+      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-[250px]' : 'ml-[80px]'} bg-gray-50 min-h-screen`}>
         <div className="p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Update Ticket</h1>
-            {ticketId ? (
-              <div className="flex items-center gap-2">
-                <Link
-                  href={`/tickets/agent/view-ticket?id=${ticketId}`}
-                  className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                >
-                  <ArrowLeft size={14} />
-                  <span>Back to Ticket</span>
-                </Link>
-                <span className="text-gray-400">|</span>
-                <p className="text-gray-600">Editing Ticket #{ticketId}</p>
-              </div>
-            ) : (
-              <p className="text-red-500">No Ticket ID provided</p>
-            )}
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/tickets/agent/view-ticket?id=${ticketId}`}
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                <ArrowLeft size={14} />
+                <span>Back to Ticket</span>
+              </Link>
+              <span className="text-gray-400">|</span>
+              <p className="text-gray-600">Editing Ticket #{ticketId}</p>
+            </div>
           </div>
 
           {successMessage && (
-            <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+            <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
               <CheckCircle size={18} />
               <span>{successMessage}</span>
-            </div>
-          )}
-
-          {errorMessage && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
-              <AlertCircle size={18} />
-              <span>{errorMessage}</span>
             </div>
           )}
 
@@ -179,7 +173,7 @@ export default function AgentUpdateTicketClient() {
                       <select
                         value={ticket.status}
                         onChange={(e) => setTicket({ ...ticket, status: e.target.value })}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="Open">Open</option>
                         <option value="In Progress">In Progress</option>
@@ -193,13 +187,18 @@ export default function AgentUpdateTicketClient() {
                       <select
                         value={ticket.priority}
                         onChange={(e) => setTicket({ ...ticket, priority: e.target.value })}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="Low">Low</option>
                         <option value="Medium">Medium</option>
                         <option value="High">High</option>
                         <option value="Critical">Critical</option>
                       </select>
+                    </div>
+
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
+                      <p className="text-gray-700">{ticket.assignedTo?.firstName || 'Unassigned'}</p>
                     </div>
 
                     <button
@@ -219,17 +218,37 @@ export default function AgentUpdateTicketClient() {
                 <AlertCircle size={24} className="text-red-500" />
               </div>
               <h3 className="text-lg font-medium text-gray-800 mb-2">Ticket Not Found</h3>
-              <p className="text-gray-600 mb-6">
-                The ticket you are trying to update does not exist or has been removed.
-              </p>
+              <p className="text-gray-600 mb-6">The ticket you are trying to update doesnot exist or has been removed.</p>
               <Link
                 href="/tickets/agent"
-                className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 Return to Tickets
               </Link>
             </div>
           )}
+
+          <div className="mt-10 bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Instructions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-medium text-gray-700 mb-2">For Updating Ticket</h3>
+                <ul className="list-disc list-inside text-gray-600">
+                  <li>Ensure all fields are filled out correctly.</li>
+                  <li>Update the status and priority as needed.</li>
+                  <li>Provide a detailed description of the changes.</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-700 mb-2">For Saving Changes</h3>
+                <ul className="list-disc list-inside text-gray-600">
+                  <li>Click the Save Changes button after making updates.</li>
+                  <li>Wait for the confirmation message to appear.</li>
+                  <li>Navigate back to the ticket list if needed.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

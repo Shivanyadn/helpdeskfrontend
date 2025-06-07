@@ -122,21 +122,21 @@ const AgentAnalyticsPage = () => {
         }
 
         // Fetch ticket analytics data
-        const analyticsResponse = await axios.get('http://localhost:5000/api/tickets/analytics', {
+        const analyticsResponse = await axios.get('https://help.zenapi.co.in/api/tickets/analytics', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
         // Fetch resolution times data
-        const resolutionResponse = await axios.get('http://localhost:5000/api/tickets/resolution-times', {
+        const resolutionResponse = await axios.get('https://help.zenapi.co.in/api/tickets/resolution-times', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
         // Fetch tickets data for categories
-        const ticketsResponse = await axios.get('http://localhost:5000/api/tickets', {
+        const ticketsResponse = await axios.get('https://help.zenapi.co.in/api/tickets', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -150,7 +150,7 @@ const AgentAnalyticsPage = () => {
           // Calculate the average resolution time
           const resolutionTimes = resolutionResponse.data.resolutionTimes || [];
           const totalResolutionTime = resolutionTimes.reduce((sum: number, item: { resolutionTimeInHours: string }) => {
-            return sum + parseFloat(item.resolutionTimeInHours);
+            return sum + parseFloat(item.resolutionTimeInHours)/60;
           }, 0);
           const avgResolutionTime = resolutionTimes.length > 0 ? parseFloat((totalResolutionTime / resolutionTimes.length).toFixed(2)) : 0;
 

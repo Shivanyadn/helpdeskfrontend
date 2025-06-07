@@ -54,7 +54,7 @@ export default function EmployeeReportsPage() {
         
         const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
         
-        const response = await fetch('http://localhost:5010/api/tickets', {
+        const response = await fetch('https://help.zenapi.co.in/api/tickets', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

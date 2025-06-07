@@ -93,7 +93,7 @@ export default function ViewTicketPage() {
         throw new Error('Authentication token not found. Please log in again.');
       }
       // Make the API request to resolve the ticket
-      const response = await fetch(`http://localhost:5010/api/tickets/${ticketId}/resolve`, {
+      const response = await fetch(`https://help.zenapi.co.in/api/tickets/${ticketId}/resolve`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -170,7 +170,7 @@ export default function ViewTicketPage() {
       console.log(`Attempting to download: ${attachmentId} from ticket: ${ticketId}`);
       
       // Make the API request
-      const response = await fetch(`http://localhost:5010/api/tickets/${ticketId}/attachments/${attachmentId}`, {
+      const response = await fetch(`https://help.zenapi.co.in/api/tickets/${ticketId}/attachments/${attachmentId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`, // Make sure to add Bearer prefix if required by your API
@@ -233,9 +233,9 @@ export default function ViewTicketPage() {
       const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
 
       console.log('Auth Token:', authToken);
-      console.log(`Fetching from URL: http://localhost:5010/api/tickets/${ticketId}`);
+      console.log(`Fetching from URL: https://help.zenapi.co.in/api/tickets/${ticketId}`);
 
-      const response = await fetch(`http://localhost:5010/api/tickets/${ticketId}`, {
+      const response = await fetch(`https://help.zenapi.co.in/api/tickets/${ticketId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

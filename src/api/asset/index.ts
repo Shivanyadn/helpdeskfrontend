@@ -1,7 +1,7 @@
 // Remove the import for getAuthToken since it's not exported
 // import { getAuthToken } from '../tickets';
 
-const API_BASE_URL = 'http://localhost:5015/api';
+const API_BASE_URL = 'https://help.zenapi.co.in/asset_service_requests/api';
 
 export interface AssetRequestPayload {
   userId: string; // MongoDB ObjectId as string (24 character hex)

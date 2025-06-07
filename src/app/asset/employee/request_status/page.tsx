@@ -71,9 +71,9 @@ export default function RequestStatusPage() {
       const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
       
       console.log('Auth Token:', authToken); // Debugging line
-      console.log('Fetching from URL:', 'http://localhost:5015/api/servicerequest/requests'); // Debugging line
+      console.log('Fetching from URL:', 'https://help.zenapi.co.in/asset_service_requests/api/servicerequest/requests'); // Debugging line
       
-      const response = await fetch('http://localhost:5015/api/servicerequest/requests', {
+      const response = await fetch('https://help.zenapi.co.in/asset_service_requests/api/servicerequest/requests', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

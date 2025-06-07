@@ -45,7 +45,7 @@ const SuggestFAQsPage = () => {
         throw new Error('Authorization token is missing. Please log in again.');
       }
 
-      const response = await fetch('http://localhost:5001/api/articles', {
+      const response = await fetch('https://help.zenapi.co.in/knowledge_base/api/articles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

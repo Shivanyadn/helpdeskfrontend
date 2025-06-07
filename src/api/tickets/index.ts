@@ -1,6 +1,6 @@
 import { getToken } from '../auth';
 
-const API_BASE_URL = 'http://localhost:5010/api';
+const API_BASE_URL = 'https://help.zenapi.co.in/api';
 
 // Payload to create a new ticket
 export interface CreateTicketPayload {

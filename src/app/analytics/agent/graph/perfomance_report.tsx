@@ -33,7 +33,7 @@ export default function AgentPerformanceReport() {
         }
 
         // Fetch analytics data
-        const analyticsResponse = await axios.get('http://localhost:5000/api/tickets/analytics', {
+        const analyticsResponse = await axios.get('https://help.zenapi.co.in/api/tickets/analytics', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -45,7 +45,7 @@ export default function AgentPerformanceReport() {
         }
 
         // Fetch resolution times data
-        const resolutionResponse = await axios.get('http://localhost:5000/api/tickets/resolution-times', {
+        const resolutionResponse = await axios.get('https://help.zenapi.co.in/api/tickets/resolution-times', {
           headers: {
             Authorization: `Bearer ${token}`,
           },

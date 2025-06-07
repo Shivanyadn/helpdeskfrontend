@@ -166,7 +166,7 @@ const AgentSidebar: React.FC<AgentSidebarProps> = ({ isOpen, toggleSidebar }) =>
           </div>
           {isOpen && (
             <div>
-              <h3 className="text-sm font-medium text-gray-800">Agent Name</h3>
+              <h3 className="text-sm font-medium text-gray-800">Pooja</h3>
               <p className="text-xs text-gray-500">Support Team</p>
             </div>
           )}
