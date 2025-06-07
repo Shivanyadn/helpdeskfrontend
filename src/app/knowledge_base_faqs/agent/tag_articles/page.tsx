@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import AgentSidebar from '@/app/sidebar/AgentSidebar';
 import { Tag, Plus, Search, BookOpen, Filter, X, Save, CheckCircle } from 'lucide-react';
 
@@ -58,7 +58,7 @@ const TagArticlesPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showSaveMessage, setShowSaveMessage] = useState(false);
-  const [suggestedTags, setSuggestedTags] = useState<string[]>([
+  const [suggestedTags] = useState<string[]>([
     'software', 'hardware', 'security', 'login', 'access', 'mobile', 'desktop', 
     'windows', 'mac', 'browser', 'outlook', 'teams', 'office365'
   ]);

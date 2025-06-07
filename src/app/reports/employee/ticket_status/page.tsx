@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import EmployeeSidebar from '@/app/sidebar/EmployeeSidebar';
-import { ArrowLeft, FileText, Download, Calendar, Filter, Search, RefreshCw, ChevronDown, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Download, Calendar, Filter, Search, RefreshCw, ChevronDown, Clock, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import jsPDF from 'jspdf';
 
@@ -39,7 +39,7 @@ export default function EmployeeReportsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedReport, setExpandedReport] = useState<string | null>(null);
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<Report[]>([]); // Fixed type
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +54,7 @@ export default function EmployeeReportsPage() {
         
         const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
         
-        const response = await fetch('http://localhost:5000/api/tickets', {
+        const response = await fetch('http://localhost:5010/api/tickets', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

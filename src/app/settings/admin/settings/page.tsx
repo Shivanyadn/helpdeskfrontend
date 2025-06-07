@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import {
   ShieldCheck,
   Bell,
-  Moon,
   MessageCircle,
   Globe,
   Save,
@@ -13,13 +12,10 @@ import {
   KeyRound,
   Users,
   Mail,
-  Smartphone,
   ScanFace,
   Paintbrush2,
   Database,
   Timer,
-  LockKeyhole,
-  ArchiveRestore
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -166,7 +162,11 @@ const settingsSections = [
   {
     title: 'Access Role',
     icon: <KeyRound />,
-    children: (settings: Settings, toggle: any, change: any) => (
+    children: (
+      settings: Settings,
+      toggle: (key: keyof Settings) => void,
+      change: (key: keyof Settings, value: string | number) => void
+    ) => (
       <>
         <select
           value={settings.role}
@@ -176,21 +176,36 @@ const settingsSections = [
           <option value="admin">Admin</option>
           <option value="super-admin">Super Admin</option>
         </select>
-        <Toggle label="Allow Role Switching" value={settings.allowRoleSwitch} onChange={() => toggle('allowRoleSwitch')} />
+        <Toggle
+          label="Allow Role Switching"
+          value={settings.allowRoleSwitch}
+          onChange={() => toggle('allowRoleSwitch')}
+        />
       </>
     ),
   },
   {
     title: 'Notifications',
     icon: <Bell />,
-    children: (settings: Settings, toggle: any) => (
-      <Toggle label="Enable Notifications" value={settings.enableNotifications} onChange={() => toggle('enableNotifications')} />
+    children: (
+      settings: Settings,
+      toggle: (key: keyof Settings) => void
+    ) => (
+      <Toggle
+        label="Enable Notifications"
+        value={settings.enableNotifications}
+        onChange={() => toggle('enableNotifications')}
+      />
     ),
   },
   {
     title: 'Theme & Display',
     icon: <Paintbrush2 />,
-    children: (settings: Settings, toggle: any, change: any) => (
+    children: (
+      settings: Settings,
+      toggle: (key: keyof Settings) => void,
+      change: (key: keyof Settings, value: string | number) => void
+    ) => (
       <>
         <select
           value={settings.theme}
@@ -201,21 +216,36 @@ const settingsSections = [
           <option value="dark">Dark</option>
           <option value="system">System</option>
         </select>
-        <Toggle label="Enable Dark Mode" value={settings.enableDarkMode} onChange={() => toggle('enableDarkMode')} />
+        <Toggle
+          label="Enable Dark Mode"
+          value={settings.enableDarkMode}
+          onChange={() => toggle('enableDarkMode')}
+        />
       </>
     ),
   },
   {
     title: 'Live Chat',
     icon: <MessageCircle />,
-    children: (settings: Settings, toggle: any) => (
-      <Toggle label="Enable Live Chat" value={settings.enableLiveChat} onChange={() => toggle('enableLiveChat')} />
+    children: (
+      settings: Settings,
+      toggle: (key: keyof Settings) => void
+    ) => (
+      <Toggle
+        label="Enable Live Chat"
+        value={settings.enableLiveChat}
+        onChange={() => toggle('enableLiveChat')}
+      />
     ),
   },
   {
     title: 'Language',
     icon: <Globe />,
-    children: (settings: Settings, _toggle: any, change: any) => (
+    children: (
+      settings: Settings,
+      _toggle: (key: keyof Settings) => void,
+      change: (key: keyof Settings, value: string) => void
+    ) => (
       <select
         value={settings.language}
         onChange={(e) => change('language', e.target.value)}
@@ -231,19 +261,38 @@ const settingsSections = [
   {
     title: 'Security & Audit',
     icon: <ShieldAlert />,
-    children: (settings: Settings, toggle: any) => (
+    children: (
+      settings: Settings,
+      toggle: (key: keyof Settings) => void
+    ) => (
       <>
-        <Toggle label="Enable Audit Trail" value={settings.enableAuditTrail} onChange={() => toggle('enableAuditTrail')} />
-        <Toggle label="Two-Factor Authentication" value={settings.enableTwoFactorAuth} onChange={() => toggle('enableTwoFactorAuth')} />
+        <Toggle
+          label="Enable Audit Trail"
+          value={settings.enableAuditTrail}
+          onChange={() => toggle('enableAuditTrail')}
+        />
+        <Toggle
+          label="Two-Factor Authentication"
+          value={settings.enableTwoFactorAuth}
+          onChange={() => toggle('enableTwoFactorAuth')}
+        />
       </>
     ),
   },
   {
     title: 'Activity Log',
     icon: <Eye />,
-    children: (settings: Settings, toggle: any, change: any) => (
+    children: (
+      settings: Settings,
+      toggle: (key: keyof Settings) => void,
+      change: (key: keyof Settings, value: string) => void
+    ) => (
       <>
-        <Toggle label="Show Activity Logs" value={settings.showActivityLog} onChange={() => toggle('showActivityLog')} />
+        <Toggle
+          label="Show Activity Logs"
+          value={settings.showActivityLog}
+          onChange={() => toggle('showActivityLog')}
+        />
         <select
           value={settings.logRetention}
           onChange={(e) => change('logRetention', e.target.value)}
@@ -259,33 +308,66 @@ const settingsSections = [
   {
     title: 'User Access Control',
     icon: <Users />,
-    children: (settings: Settings, toggle: any) => (
-      <Toggle label="Enable Access Management" value={settings.manageUserAccess} onChange={() => toggle('manageUserAccess')} />
+    children: (
+      settings: Settings,
+      toggle: (key: keyof Settings) => void
+    ) => (
+      <Toggle
+        label="Enable Access Management"
+        value={settings.manageUserAccess}
+        onChange={() => toggle('manageUserAccess')}
+      />
     ),
   },
   {
     title: 'Manager Alerts & Access',
     icon: <Mail />,
-    children: (settings: Settings, toggle: any) => (
+    children: (
+      settings: Settings,
+      toggle: (key: keyof Settings) => void
+    ) => (
       <>
-        <Toggle label="Allow Email Alerts" value={settings.allowEmailAlerts} onChange={() => toggle('allowEmailAlerts')} />
-        <Toggle label="Mobile Access" value={settings.enableMobileAccess} onChange={() => toggle('enableMobileAccess')} />
+        <Toggle
+          label="Allow Email Alerts"
+          value={settings.allowEmailAlerts}
+          onChange={() => toggle('allowEmailAlerts')}
+        />
+        <Toggle
+          label="Mobile Access"
+          value={settings.enableMobileAccess}
+          onChange={() => toggle('enableMobileAccess')}
+        />
       </>
     ),
   },
   {
     title: 'Biometrics',
     icon: <ScanFace />,
-    children: (settings: Settings, toggle: any) => (
-      <Toggle label="Facial Recognition Login" value={settings.enableFacialRecognition} onChange={() => toggle('enableFacialRecognition')} />
+    children: (
+      settings: Settings,
+      toggle: (key: keyof Settings) => void
+    ) => (
+      <Toggle
+        label="Facial Recognition Login"
+        value={settings.enableFacialRecognition}
+        onChange={() => toggle('enableFacialRecognition')}
+      />
     ),
   },
   {
     title: 'Backup & Security Policy',
     icon: <Database />,
-    children: (settings: Settings, toggle: any, change: any) => (
+    children: (
+      settings: Settings,
+      toggle: (key: keyof Settings) => void,
+      change: (key: keyof Settings, value: string) => void
+    ) => (
       <>
-        <Toggle label="Enable Automatic Backups" value={settings.enableBackup} onChange={() => toggle('enableBackup')} />
+        <Toggle
+          label="Enable Automatic Backups"
+          value={settings.enableBackup}
+          onChange={() => toggle('enableBackup')}
+        />
         <select
           value={settings.passwordPolicy}
           onChange={(e) => change('passwordPolicy', e.target.value)}
@@ -301,7 +383,11 @@ const settingsSections = [
   {
     title: 'Session Timeout',
     icon: <Timer />,
-    children: (settings: Settings, _toggle: any, change: any) => (
+    children: (
+      settings: Settings,
+      _toggle: (key: keyof Settings) => void,
+      change: (key: keyof Settings, value: number) => void
+    ) => (
       <label className="block text-gray-600">
         Auto Logout After:
         <input

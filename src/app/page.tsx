@@ -42,7 +42,7 @@ function LoginFormSkeleton() {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, error: authError, isLoading: authLoading } = useAuth();
+  const { login, error: authError } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [darkMode, setDarkMode] = useState(false);

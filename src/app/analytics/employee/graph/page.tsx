@@ -296,7 +296,7 @@ export default function AnalyticsGraphPage() {
                 {Object.values(cls.chartControls).map(item => (
                   <button
                     key={item.type}
-                    onClick={() => setChartType(item.type as any)}
+                    onClick={() => setChartType(item.type as 'bar' | 'line' | 'doughnut')} // Replaced `any` with specific type
                     className={`${cls.btn} ${chartType === item.type ? cls.btnActive : cls.btnOutline}`}
                   >
                     {item.icon}<span>{item.label}</span>
@@ -308,7 +308,7 @@ export default function AnalyticsGraphPage() {
                 {cls.timeRanges.map(item => (
                   <button
                     key={item.range}
-                    onClick={() => setTimeRange(item.range as any)}
+                    onClick={() => setTimeRange(item.range as '1month' | '3months' | '6months')} // Replaced `any` with specific type
                     className={`px-3 py-1.5 text-sm font-medium transition-colors ${
                       timeRange === item.range ? 'text-blue-700 bg-blue-50' : 'text-gray-700 hover:bg-gray-50'
                     }`}

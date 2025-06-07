@@ -1,5 +1,4 @@
 import { ApiResponse } from '../types';
-import { storeAuthToken } from '../tickets';
 
 const API_URL = 'https://sso.zenapi.co.in/api';
 
@@ -8,8 +7,29 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface User {
+  profile_image: string;
+  project_name: string;
+  permissions: string[];
+  role: string;
+  id: string;
+  username: string;
+  email: string;
+  // Add other user fields as needed
+}
+
+export interface LoginResponse {
+  user: User;
+  token: string;
+  accessToken: string;
+}
+
+export interface ErrorResponse {
+  message: string;
+}
+
 // Add this function to store user data
-const storeUserData = (response: any) => {
+const storeUserData = (response: LoginResponse) => {
   if (response && response.user) {
     localStorage.setItem('user_data', JSON.stringify(response.user));
     localStorage.setItem('auth_token', response.token);
@@ -17,7 +37,7 @@ const storeUserData = (response: any) => {
 };
 
 export const authService = {
-  login: async (credentials: LoginCredentials): Promise<ApiResponse<any>> => {
+  login: async (credentials: LoginCredentials): Promise<ApiResponse<LoginResponse>> => {
     try {
         const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
@@ -36,16 +56,16 @@ export const authService = {
         // Check if the response contains the required fields
         if (response.ok && data.accessToken && data.user) {
             // Store token and user data after successful login
-            storeUserData(data);
+            storeUserData(data as LoginResponse);
 
             return {
                 success: true,
-                data: data,
+                data: data as LoginResponse,
             };
         } else {
             return {
                 success: false,
-                error: data.message || 'Login failed',
+                error: (data as ErrorResponse).message || 'Login failed',
             };
         }
     } catch (error) {

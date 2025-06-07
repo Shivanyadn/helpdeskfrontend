@@ -9,11 +9,9 @@ import {
   Search, 
   Plus, 
   Laptop, 
-  Monitor, 
   Package, 
   FileText, 
   Calendar, 
-  User, 
   Filter, 
   Download, 
   Trash2, 
@@ -195,25 +193,21 @@ const AssignAsset = () => {
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 shadow-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={toggleSidebar} 
-                className="md:hidden text-white hover:bg-blue-700/50"
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md"
+                onClick={toggleSidebar}
               >
                 <Menu />
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-white">Asset Assignment</h1>
-                <p className="text-blue-100 mt-1">Manage and track your organization's assets</p>
+                <p className="text-blue-100 mt-1">Manage and track your organization&apos;s assets</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
-                className="bg-white/10 text-white hover:bg-white/20 border-white/20"
+              <Button
+                className="bg-white/10 text-white hover:bg-white/20 border-white/20 px-4 py-2 rounded-md"
                 onClick={() => {
-                  // Export functionality would go here
                   alert('Export functionality will be implemented here');
                 }}
               >
@@ -417,8 +411,8 @@ const AssignAsset = () => {
                     </div>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-3 border-t pt-4">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      className="border border-gray-300 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-md"
                       onClick={() => {
                         setSelectedEmployee(null);
                         setSelectedAsset(null);
@@ -430,9 +424,9 @@ const AssignAsset = () => {
                       Clear
                     </Button>
                     <Button
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
                       onClick={handleAssignAsset}
                       disabled={!selectedEmployee || !selectedAsset || isAssigning}
-                      className="bg-blue-600 hover:bg-blue-700"
                     >
                       {isAssigning ? (
                         <>
@@ -473,7 +467,9 @@ const AssignAsset = () => {
                           onChange={(e) => setSearchTerm(e.target.value)}
                         />
                       </div>
-                      <Button variant="outline" size="icon">
+                      <Button
+                        className="h-8 w-8 flex items-center justify-center text-gray-500 hover:text-blue-600"
+                      >
                         <Filter className="h-4 w-4" />
                       </Button>
                     </div>
@@ -542,10 +538,14 @@ const AssignAsset = () => {
                                 </td>
                                 <td className="py-3 px-4">
                                   <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-blue-600">
+                                    <Button
+                                      className="h-8 w-8 text-gray-500 hover:text-blue-600"
+                                    >
                                       <Edit className="h-4 w-4" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-red-600">
+                                    <Button
+                                      className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                    >
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
                                   </div>

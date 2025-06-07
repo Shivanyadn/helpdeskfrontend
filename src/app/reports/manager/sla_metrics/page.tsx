@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import ManagerSidebar from '@/app/sidebar/ManagerSidebar';
-import { FileText, Download, Filter, Printer, Calendar, Clock, AlertTriangle, CheckCircle, Search } from 'lucide-react';
+import { FileText, Download, Printer, Calendar, Clock, AlertTriangle, CheckCircle, Search } from 'lucide-react';
 
 const initialData = [
   { ticketId: '12345', sla: '24 hours', resolutionTime: '20 hours', status: 'Resolved', priority: 'High', category: 'Technical', date: '2023-05-15' },
@@ -17,7 +17,7 @@ const initialData = [
 ];
 
 const ManagerSlaMetricsPage = () => {
-  const [data, setData] = useState(initialData);
+  const [data] = useState(initialData);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPriority, setFilterPriority] = useState('');

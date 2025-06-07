@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   FileText,
   BarChart,
-  Bell,
   Settings,
   ChevronDown,
   X,
@@ -68,7 +67,7 @@ const ManagerSidebar: React.FC<ManagerSidebarProps> = ({ isOpen, toggleSidebar }
 
   const articleManagementSubLinks = [
     { label: "Feedback", href: "/article_mangement/manager/feedback" },
-    { label: "AI Learning", href: "/article_mangement/manager/ai_learning" },
+    { label: "AI Learning", href:"/article_mangement/manager/ai_learning" },
   ];
 
   const analyticsSubLinks = [
@@ -340,6 +339,11 @@ const ManagerSidebar: React.FC<ManagerSidebarProps> = ({ isOpen, toggleSidebar }
             {isOpen && <span className="ml-3 text-sm font-medium">Settings</span>}
           </Link>
         </div>
+      </div>
+
+      {/* Example usage of `isMobile` */}
+      <div className={`sidebar-content ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
+        {/* Render different layouts or styles based on `isMobile` */}
       </div>
     </motion.aside>
   );

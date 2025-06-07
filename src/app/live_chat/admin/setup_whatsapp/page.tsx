@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import AdminSidebar from '@/app/sidebar/AdminSidebar';
-import { Menu, Send, MessageSquare, Phone, Video, Paperclip, Smile, Settings, Check, CheckCheck, User, RefreshCw } from 'lucide-react';
+import { Menu, Send, MessageSquare, Phone, Video, Paperclip,Settings, Check, CheckCheck, User, RefreshCw } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,14 +25,12 @@ const AdminWhatsAppChatSetup = () => {
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isClient, setIsClient] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    setIsClient(true);
     scrollToBottom();
   }, [messages]);
   
@@ -105,8 +103,6 @@ const AdminWhatsAppChatSetup = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button 
-                variant="ghost" 
-                size="icon" 
                 onClick={toggleSidebar} 
                 className="md:hidden text-white hover:bg-green-700/50"
               >
@@ -127,7 +123,7 @@ const AdminWhatsAppChatSetup = () => {
         </div>
 
         <div className="p-6 max-w-6xl mx-auto">
-          <Tabs defaultValue="chat" className="mb-6" onValueChange={setActiveTab}>
+          <Tabs defaultValue="chat" className="mb-6" onValueChange={(value) => setActiveTab(value)}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="chat" className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4" />
@@ -140,7 +136,7 @@ const AdminWhatsAppChatSetup = () => {
             </TabsList>
             
             <TabsContent value="chat">
-              {isClient && (
+              {activeTab === 'chat' && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Contact List */}
                   <Card className="md:col-span-1 border border-slate-200">
@@ -165,7 +161,7 @@ const AdminWhatsAppChatSetup = () => {
                               <span className="text-xs text-slate-500">09:36 AM</span>
                             </div>
                             <div className="flex items-center justify-between">
-                              <p className="text-sm text-slate-500 truncate w-36">It's user@example.com</p>
+                              <p className="text-sm text-slate-500 truncate w-36">It user@example.com</p>
                               <Badge className="bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center p-0">1</Badge>
                             </div>
                           </div>
@@ -212,10 +208,10 @@ const AdminWhatsAppChatSetup = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon" className="rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100">
+                          <Button className="rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100">
                             <Phone className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100">
+                          <Button className="rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100">
                             <Video className="w-4 h-4" />
                           </Button>
                         </div>
@@ -264,7 +260,7 @@ const AdminWhatsAppChatSetup = () => {
                       </div>
                       <div className="p-3 border-t bg-white">
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon" className="rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100">
+                          <Button className="rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100">
                             <Paperclip className="w-5 h-5" />
                           </Button>
                           <Input
@@ -290,119 +286,120 @@ const AdminWhatsAppChatSetup = () => {
             </TabsContent>
             
             <TabsContent value="settings">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border border-slate-200">
-                  <CardHeader>
-                    <CardTitle>WhatsApp Business API Setup</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="api-key">API Key</Label>
-                      <Input 
-                        id="api-key" 
-                        type="password" 
-                        placeholder="Enter your WhatsApp Business API key" 
-                        className="border-slate-200"
-                        disabled={isConfigured}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone-number">Business Phone Number</Label>
-                      <Input 
-                        id="phone-number" 
-                        placeholder="Enter your business phone number" 
-                        className="border-slate-200"
-                        disabled={isConfigured}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="webhook">Webhook URL</Label>
-                      <div className="flex">
+              {activeTab === 'settings' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="border border-slate-200">
+                    <CardHeader>
+                      <CardTitle>WhatsApp Business API Setup</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="api-key">API Key</Label>
                         <Input 
-                          id="webhook" 
-                          value="https://your-domain.com/api/whatsapp/webhook" 
-                          className="border-slate-200 rounded-r-none"
-                          readOnly
+                          id="api-key" 
+                          type="password" 
+                          placeholder="Enter your WhatsApp Business API key" 
+                          className="border-slate-200"
+                          disabled={isConfigured}
                         />
-                        <Button 
-                          variant="outline" 
-                          className="rounded-l-none border-slate-200 border-l-0"
-                          onClick={() => {
-                            navigator.clipboard.writeText("https://your-domain.com/api/whatsapp/webhook");
-                            alert("Webhook URL copied to clipboard!");
-                          }}
-                        >
-                          Copy
-                        </Button>
                       </div>
-                    </div>
-                    <Button 
-                      onClick={handleWhatsAppSetup}
-                      className="w-full bg-green-600 hover:bg-green-700 mt-4"
-                      disabled={isLoading || isConfigured}
-                    >
-                      {isLoading ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                          Connecting...
-                        </>
-                      ) : isConfigured ? (
-                        <>
-                          <Check className="w-4 h-4 mr-2" />
-                          Connected
-                        </>
-                      ) : (
-                        'Connect WhatsApp Business API'
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-                
-                <Card className="border border-slate-200">
-                  <CardHeader>
-                    <CardTitle>Chat Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="auto-reply">Auto Reply</Label>
-                        <p className="text-sm text-slate-500">Send automatic responses to new messages</p>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone-number">Business Phone Number</Label>
+                        <Input 
+                          id="phone-number" 
+                          placeholder="Enter your business phone number" 
+                          className="border-slate-200"
+                          disabled={isConfigured}
+                        />
                       </div>
-                      <Switch id="auto-reply" />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="notifications">Notifications</Label>
-                        <p className="text-sm text-slate-500">Receive email notifications for new messages</p>
-                      </div>
-                      <Switch id="notifications" defaultChecked />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="business-hours">Business Hours Only</Label>
-                        <p className="text-sm text-slate-500">Only show as online during business hours</p>
-                      </div>
-                      <Switch id="business-hours" />
-                    </div>
-                    
-                    <div className="pt-4 border-t">
-                      <h3 className="font-medium mb-3">Business Hours</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="open-time">Opening Time</Label>
-                          <Input id="open-time" type="time" defaultValue="09:00" className="border-slate-200" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="close-time">Closing Time</Label>
-                          <Input id="close-time" type="time" defaultValue="17:00" className="border-slate-200" />
+                      <div className="space-y-2">
+                        <Label htmlFor="webhook">Webhook URL</Label>
+                        <div className="flex">
+                          <Input 
+                            id="webhook" 
+                            value="https://your-domain.com/api/whatsapp/webhook" 
+                            className="border-slate-200 rounded-r-none"
+                            readOnly
+                          />
+                          <Button 
+                            className="rounded-l-none border-slate-200 border-l-0"
+                            onClick={() => {
+                              navigator.clipboard.writeText("https://your-domain.com/api/whatsapp/webhook");
+                              alert("Webhook URL copied to clipboard!");
+                            }}
+                          >
+                            Copy
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                      <Button 
+                        onClick={handleWhatsAppSetup}
+                        className="w-full bg-green-600 hover:bg-green-700 mt-4"
+                        disabled={isLoading || isConfigured}
+                      >
+                        {isLoading ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            Connecting...
+                          </>
+                        ) : isConfigured ? (
+                          <>
+                            <Check className="w-4 h-4 mr-2" />
+                            Connected
+                          </>
+                        ) : (
+                          'Connect WhatsApp Business API'
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="border border-slate-200">
+                    <CardHeader>
+                      <CardTitle>Chat Settings</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="auto-reply">Auto Reply</Label>
+                          <p className="text-sm text-slate-500">Send automatic responses to new messages</p>
+                        </div>
+                        <Switch id="auto-reply" />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="notifications">Notifications</Label>
+                          <p className="text-sm text-slate-500">Receive email notifications for new messages</p>
+                        </div>
+                        <Switch id="notifications" defaultChecked />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="business-hours">Business Hours Only</Label>
+                          <p className="text-sm text-slate-500">Only show as online during business hours</p>
+                        </div>
+                        <Switch id="business-hours" />
+                      </div>
+                      
+                      <div className="pt-4 border-t">
+                        <h3 className="font-medium mb-3">Business Hours</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="open-time">Opening Time</Label>
+                            <Input id="open-time" type="time" defaultValue="09:00" className="border-slate-200" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="close-time">Closing Time</Label>
+                            <Input id="close-time" type="time" defaultValue="17:00" className="border-slate-200" />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>

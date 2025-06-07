@@ -399,7 +399,7 @@ const FAQsPage = () => {
           <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-sm overflow-hidden text-white p-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between">
               <div className="mb-4 md:mb-0">
-                <h3 className="text-xl font-bold mb-2">Can't find what you're looking for?</h3>
+                <h3 className="text-xl font-bold mb-2">Cannot find what you are looking for?</h3>
                 <p className="text-blue-100">Our support team is ready to help you with any questions.</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">

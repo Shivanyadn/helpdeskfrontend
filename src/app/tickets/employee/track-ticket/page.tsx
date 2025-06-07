@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import EmployeeSidebar from '@/app/sidebar/EmployeeSidebar';
-import { Search, Filter, Clock, AlertCircle, Calendar, Tag, ArrowUpRight, RefreshCw, CheckCircle, XCircle, Loader2, ArrowLeft, ChevronRight, Clock3, User, MessageSquare, Download, Share2, Bell, BarChart4, Printer, Eye, EyeOff, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { Search, Filter, Clock, AlertCircle, Tag, ArrowUpRight, RefreshCw, CheckCircle, XCircle, Loader2, ChevronRight, User, MessageSquare, Download,  BarChart4, Printer, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getUserTickets, TicketResponse } from '@/api/tickets';
+import { getUserTickets} from '@/api/tickets';
 
 interface Ticket {
   id: string;
@@ -44,14 +44,8 @@ export default function TrackTicketPage() {
   const [dateRangeFilter, setDateRangeFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
-  const [stats, setStats] = useState({
-    total: 0,
-    open: 0,
-    inProgress: 0,
-    resolved: 0,
-    closed: 0
-  });
-  const [error, setError] = useState<string | null>(null);
+const [error, setError] = useState<string | null>(null);
+
 
   // Function to fetch tickets from API
   const fetchTickets = async () => {
@@ -108,14 +102,6 @@ export default function TrackTicketPage() {
       
       setTickets(transformedTickets);
       
-      // Calculate stats
-      setStats({
-        total: transformedTickets.length,
-        open: transformedTickets.filter(t => t.status === 'Open').length,
-        inProgress: transformedTickets.filter(t => t.status === 'In Progress').length,
-        resolved: transformedTickets.filter(t => t.status === 'Resolved').length,
-        closed: transformedTickets.filter(t => t.status === 'Closed').length
-      });
       
     } catch (err) {
       console.error('Error fetching tickets:', err);
@@ -135,29 +121,6 @@ export default function TrackTicketPage() {
     fetchTickets();
   };
 
-  const toggleTicketExpansion = (ticketId: string) => {
-    setTickets(tickets.map(ticket => 
-      ticket.id === ticketId 
-        ? { ...ticket, expanded: !ticket.expanded } 
-        : ticket
-    ));
-  };
-
-  const toggleSelectTicket = (ticketId: string) => {
-    if (selectedTickets.includes(ticketId)) {
-      setSelectedTickets(selectedTickets.filter(id => id !== ticketId));
-    } else {
-      setSelectedTickets([...selectedTickets, ticketId]);
-    }
-  };
-
-  const selectAllTickets = () => {
-    if (selectedTickets.length === filteredTickets.length) {
-      setSelectedTickets([]);
-    } else {
-      setSelectedTickets(filteredTickets.map(ticket => ticket.id));
-    }
-  };
 
   const exportSelectedTickets = () => {
     // Implementation for exporting tickets
@@ -169,19 +132,17 @@ export default function TrackTicketPage() {
     window.print();
   };
 
-  const subscribeToUpdates = (ticketId: string) => {
-    // Implementation for subscribing to ticket updates
-    alert(`Subscribed to updates for ticket ${ticketId}`);
-  };
 
   useEffect(() => {
     fetchTickets();
   }, []);
 
+
+
   // Apply filters and sorting
   const getFilteredAndSortedTickets = () => {
     // First apply filters
-    let result = tickets.filter(ticket => {
+    const result = tickets.filter(ticket => {
       const matchesSearch = ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             ticket.id.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === 'All' || ticket.status === statusFilter;
@@ -271,40 +232,7 @@ export default function TrackTicketPage() {
     }
   };
 
-  const fetchTicketById = async (ticketId: string) => {
-    try {
-      const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
-      const response = await fetch(`http://localhost:5000/api/tickets/${ticketId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Ensure this is correctly formatted
-          'Accept': 'application/json',
-        },
-        credentials: 'include',
-      });
 
-      if (!response.ok) {
-        throw new Error(`Error fetching ticket: ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (!data.success || !data.ticket) {
-        throw new Error('Invalid API response format');
-      }
-
-      setTickets((prevTickets) => {
-        // Update the specific ticket in the list
-        return prevTickets.map(ticket => 
-          ticket.id === data.ticket.id ? data.ticket : ticket
-        );
-      });
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching ticket by ID:', err);
-      setError('Failed to load ticket details. Please try again later.');
-    }
-  };
 
   return (
     <div className="flex h-screen bg-slate-100">
@@ -318,6 +246,11 @@ export default function TrackTicketPage() {
               <Link href="/dashboard/employee" className="hover:text-indigo-600">Dashboard</Link>
               <ChevronRight size={14} className="mx-1" />
               <span className="text-slate-700 font-medium">Track Tickets</span>
+              {error && (
+          <div className="bg-red-100 border border-red-300 text-red-800 p-3 rounded-md mb-4">
+            {error}
+          </div>
+        )}
             </div>
             
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -492,6 +425,13 @@ export default function TrackTicketPage() {
               </div>
             </div>
           )}
+
+          {/* Error Message */}
+{error && (
+  <div className="bg-red-100 border border-red-300 text-red-800 p-3 rounded-md mt-4 text-sm">
+    {error}
+  </div>
+)}
           
           {/* Tickets List */}
           {loading ? (

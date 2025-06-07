@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import AdminSidebar from "@/app/sidebar/AdminSidebar";
 import { Menu, RefreshCw, CheckCircle, AlertCircle, Filter, Download, MoreHorizontal } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -111,8 +111,6 @@ const AdminAutoAssignTicketPage = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
               <div className="flex items-center gap-4">
                 <Button 
-                  variant="ghost" 
-                  size="icon" 
                   onClick={toggleSidebar} 
                   className="md:hidden"
                 >
@@ -232,7 +230,7 @@ const AdminAutoAssignTicketPage = () => {
                     
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon">
+                        <Button>
                           <Filter className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -243,7 +241,7 @@ const AdminAutoAssignTicketPage = () => {
                       </DropdownMenuContent>
                     </DropdownMenu>
                     
-                    <Button variant="outline" size="icon">
+                    <Button>
                       <Download className="h-4 w-4" />
                     </Button>
                   </div>
@@ -305,7 +303,7 @@ const AdminAutoAssignTicketPage = () => {
                                   <td className="px-6 py-5 text-right">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon">
+                                        <Button>
                                           <MoreHorizontal className="h-4 w-4" />
                                         </Button>
                                       </DropdownMenuTrigger>
@@ -368,7 +366,7 @@ const AdminAutoAssignTicketPage = () => {
                                     </Badge>
                                   </td>
                                   <td className="px-6 py-5 text-right">
-                                    <Button variant="ghost" size="icon">
+                                    <Button>
                                       <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                   </td>
@@ -425,7 +423,7 @@ const AdminAutoAssignTicketPage = () => {
                                     </Badge>
                                   </td>
                                   <td className="px-6 py-5 text-right">
-                                    <Button variant="ghost" size="icon">
+                                    <Button>
                                       <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                   </td>
@@ -482,7 +480,7 @@ const AdminAutoAssignTicketPage = () => {
                                     </Badge>
                                   </td>
                                   <td className="px-6 py-5 text-right">
-                                    <Button variant="ghost" size="icon">
+                                    <Button>
                                       <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                   </td>

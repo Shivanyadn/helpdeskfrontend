@@ -17,11 +17,12 @@ const StatGrid: React.FC<StatGridProps> = ({ data }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       {data.map((item, index) => (
         <WidgetCard
-          key={index}
-          title={item.title}
-          value={item.value}
-          icon={item.icon}
-        />
+  key={index}
+  title={item.title}
+  value={String(item.value)} // 👈 Force convert number to string
+  icon={item.icon}
+/>
+
       ))}
     </div>
   );

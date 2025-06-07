@@ -8,6 +8,10 @@ import {
   TrendingUp, BarChart
 } from 'lucide-react';
 
+interface ResolutionTime {
+  resolutionTimeInHours: string;
+}
+
 export default function AgentPerformanceReport() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter'>('month');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -48,10 +52,9 @@ export default function AgentPerformanceReport() {
         });
 
         if (resolutionResponse.data.success) {
-          const resolutionTimes = resolutionResponse.data.resolutionTimes || [];
+          const resolutionTimes: ResolutionTime[] = resolutionResponse.data.resolutionTimes || [];
           const totalResolutionTime = resolutionTimes.reduce(
-            (sum: number, item: { resolutionTimeInHours: string }) =>
-              sum + parseFloat(item.resolutionTimeInHours),
+            (sum, item) => sum + parseFloat(item.resolutionTimeInHours),
             0
           );
           const averageTime =
@@ -86,7 +89,7 @@ export default function AgentPerformanceReport() {
           
           <select 
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as any)}
+            onChange={(e) => setTimeRange(e.target.value as 'week' | 'month' | 'quarter')}
             className="btn-outline"
           >
             <option value="week">This Week</option>

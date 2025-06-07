@@ -1,7 +1,7 @@
 // Remove the import for getAuthToken since it's not exported
 // import { getAuthToken } from '../tickets';
 
-const API_BASE_URL = 'http://localhost:5005/api';
+const API_BASE_URL = 'http://localhost:5015/api';
 
 export interface AssetRequestPayload {
   userId: string; // MongoDB ObjectId as string (24 character hex)
@@ -12,13 +12,19 @@ export interface AssetRequestPayload {
   attachments: File[];
 }
 
+export interface Attachment {
+  name: string;
+  url: string;
+  type: string;
+}
+
 export interface AssetRequestResponse {
   requestId: string;
   requestType: string;
   justification: string;
   costCenter: string;
   timeline: string;
-  attachments: any[];
+  attachments: Attachment[]; // Specify the type as Attachment[]
 }
 
 export interface ApiResponse {

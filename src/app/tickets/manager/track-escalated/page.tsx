@@ -13,7 +13,6 @@ import {
   AlertCircle,
   Clock,
   CheckCircle,
-  XCircle,
   ArrowUpRight
 } from "lucide-react";
 import Link from "next/link";
@@ -136,69 +135,6 @@ const EscalatedTicketsPage = () => {
     
     return matchesSearch && matchesStatus;
   });
-
-  // Get status badge styling
-  const getStatusBadge = (status: string) => {
-    switch(status) {
-      case 'Open':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            <AlertCircle className="w-3 h-3 mr-1" />
-            Open
-          </span>
-        );
-      case 'Pending Review':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            <Clock className="w-3 h-3 mr-1" />
-            Pending Review
-          </span>
-        );
-      case 'Resolved':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Resolved
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-            {status}
-          </span>
-        );
-    }
-  };
-
-  // Get priority badge styling
-  const getPriorityBadge = (priority: string) => {
-    switch(priority) {
-      case 'High':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
-            High
-          </span>
-        );
-      case 'Medium':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
-            Medium
-          </span>
-        );
-      case 'Low':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-            Low
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200">
-            {priority}
-          </span>
-        );
-    }
-  };
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">

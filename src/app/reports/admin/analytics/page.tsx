@@ -187,10 +187,8 @@ const AnalyticsReportPage = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div className="flex items-center gap-4">
               <Button 
-                variant="ghost" 
-                size="icon" 
                 onClick={toggleSidebar} 
-                className="md:hidden"
+                className="md:hidden bg-transparent p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
               >
                 <Menu />
               </Button>
@@ -219,19 +217,17 @@ const AnalyticsReportPage = () => {
                 </Select>
               </div>
               
-              <Button variant="outline" size="sm" className="gap-1 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">
+              <Button className="gap-1 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">
                 <Filter className="h-4 w-4" />
                 <span>Filter</span>
               </Button>
               
-              <Button variant="outline" size="sm" className="gap-1 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">
+              <Button className="gap-1 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">
                 <Download className="h-4 w-4" />
                 <span>Export</span>
               </Button>
               
               <Button 
-                variant="outline" 
-                size="sm" 
                 className={`gap-1 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 ${loading ? 'animate-spin' : ''}`}
                 onClick={() => setLoading(true)}
               >

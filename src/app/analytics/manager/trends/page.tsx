@@ -4,9 +4,9 @@
 
 import React, { useState } from 'react';
 import { Line, Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ChartOptions, ChartData } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import ManagerSidebar from '@/app/sidebar/ManagerSidebar';
-import { Calendar, TrendingUp, Clock, CheckCircle, BarChart2, Filter, Download } from 'lucide-react';
+import { Calendar, TrendingUp, Clock, CheckCircle, Download } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
@@ -74,54 +74,45 @@ const Trends = () => {
     ],
   };
 
-  // Chart options with fixed height and width
+  // Function to export data as CSV
+  const exportData = () => {
+    alert('Data export functionality would be implemented here');
+  };
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top' as const,
+        display: true,
+        position: 'top' as const, // Explicitly set to a valid value
       },
       tooltip: {
-        mode: 'index' as const,
+        enabled: true,
+        mode: 'index' as const, // Explicitly set to a valid value
         intersect: false,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        titleColor: '#333',
-        bodyColor: '#666',
-        borderColor: '#ddd',
-        borderWidth: 1,
-        padding: 10,
-        boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)',
       },
     },
     scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
-        },
-        ticks: {
-          color: '#666',
-        },
-      },
       x: {
         grid: {
           display: false,
         },
-        ticks: {
-          color: '#666',
+        title: {
+          display: true,
+          text: 'Days',
+        },
+      },
+      y: {
+        grid: {
+          color: 'rgba(200, 200, 200, 0.2)',
+        },
+        title: {
+          display: true,
+          text: 'Values',
         },
       },
     },
-    interaction: {
-      mode: 'index' as const,
-      intersect: false,
-    },
-  };
-
-  // Function to export data as CSV
-  const exportData = () => {
-    alert('Data export functionality would be implemented here');
   };
 
   return (

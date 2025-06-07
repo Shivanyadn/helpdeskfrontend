@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import ManagerSidebar from '@/app/sidebar/ManagerSidebar';
-import { Loader2, Plus, Edit2, Trash2, MessageSquare, Save, X } from 'lucide-react';
+import { Loader2, Plus, MessageSquare, Edit2, Trash2, Save, X } from 'lucide-react';
 
 // Article type
 interface Article {
@@ -14,115 +14,111 @@ interface Article {
   feedback: string[];
 }
 
-// Lazy-loaded component for individual article cards
-const ArticleCard = lazy(() =>
-  Promise.resolve({
-    default: ({
-      article,
-      onEdit,
-      onDelete,
-      onAddFeedback,
-    }: {
-      article: Article;
-      onEdit: () => void;
-      onDelete: () => void;
-      onAddFeedback: (id: number, feedback: string) => void;
-    }) => {
-      const [feedbackInput, setFeedbackInput] = useState('');
-      const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+// Inline ArticleCard component
+const ArticleCard = ({
+  article,
+  onEdit,
+  onDelete,
+  onAddFeedback,
+}: {
+  article: Article;
+  onEdit: () => void;
+  onDelete: () => void;
+  onAddFeedback: (id: number, feedback: string) => void;
+}) => {
+  const [feedbackInput, setFeedbackInput] = useState('');
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
 
-      return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
-          <div className="p-6">
-            <h3 className="text-xl font-semibold text-gray-800">{article.title}</h3>
-            <p className="text-gray-600 mt-2 mb-3">{article.content}</p>
-            <div className="flex items-center text-sm text-gray-500 space-x-4">
-              <span>Created: {new Date(article.createdAt).toLocaleDateString()}</span>
-              <span>Updated: {new Date(article.updatedAt).toLocaleDateString()}</span>
-            </div>
-          </div>
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+      <div className="p-6">
+        <h3 className="text-xl font-semibold text-gray-800">{article.title}</h3>
+        <p className="text-gray-600 mt-2 mb-3">{article.content}</p>
+        <div className="flex items-center text-sm text-gray-500 space-x-4">
+          <span>Created: {new Date(article.createdAt).toLocaleDateString()}</span>
+          <span>Updated: {new Date(article.updatedAt).toLocaleDateString()}</span>
+        </div>
+      </div>
 
-          <div className="border-t border-gray-100 bg-gray-50 p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="font-medium text-gray-700 flex items-center">
-                <MessageSquare size={18} className="mr-2 text-blue-500" />
-                Feedback ({article.feedback.length})
-              </h4>
+      <div className="border-t border-gray-100 bg-gray-50 p-4">
+        <div className="flex justify-between items-center mb-2">
+          <h4 className="font-medium text-gray-700 flex items-center">
+            <MessageSquare size={18} className="mr-2 text-blue-500" />
+            Feedback ({article.feedback.length})
+          </h4>
+          <button
+            onClick={() => setShowFeedbackForm(!showFeedbackForm)}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+          >
+            {showFeedbackForm ? (
+              <>
+                <X size={16} className="mr-1" /> Cancel
+              </>
+            ) : (
+              <>
+                <Plus size={16} className="mr-1" /> Add Feedback
+              </>
+            )}
+          </button>
+        </div>
+
+        {showFeedbackForm && (
+          <div className="mb-4 bg-white p-4 rounded-md border border-gray-200">
+            <textarea
+              value={feedbackInput}
+              onChange={(e) => setFeedbackInput(e.target.value)}
+              placeholder="Share your thoughts on this article..."
+              className="p-3 border border-gray-300 rounded-md w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              rows={3}
+            />
+            <div className="flex justify-end mt-2">
               <button
-                onClick={() => setShowFeedbackForm(!showFeedbackForm)}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+                onClick={() => {
+                  if (feedbackInput.trim()) {
+                    onAddFeedback(article.id, feedbackInput);
+                    setFeedbackInput('');
+                    setShowFeedbackForm(false);
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition flex items-center"
+                disabled={!feedbackInput.trim()}
               >
-                {showFeedbackForm ? (
-                  <>
-                    <X size={16} className="mr-1" /> Cancel
-                  </>
-                ) : (
-                  <>
-                    <Plus size={16} className="mr-1" /> Add Feedback
-                  </>
-                )}
+                <Save size={16} className="mr-2" /> Submit Feedback
               </button>
             </div>
+          </div>
+        )}
 
-            {showFeedbackForm && (
-              <div className="mb-4 bg-white p-4 rounded-md border border-gray-200">
-                <textarea
-                  value={feedbackInput}
-                  onChange={(e) => setFeedbackInput(e.target.value)}
-                  placeholder="Share your thoughts on this article..."
-                  className="p-3 border border-gray-300 rounded-md w-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  rows={3}
-                />
-                <div className="flex justify-end mt-2">
-                  <button
-                    onClick={() => {
-                      if (feedbackInput.trim()) {
-                        onAddFeedback(article.id, feedbackInput);
-                        setFeedbackInput('');
-                        setShowFeedbackForm(false);
-                      }
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition flex items-center"
-                    disabled={!feedbackInput.trim()}
-                  >
-                    <Save size={16} className="mr-2" /> Submit Feedback
-                  </button>
-                </div>
+        <div className="space-y-3 mt-2">
+          {article.feedback.length > 0 ? (
+            article.feedback.map((fb, idx) => (
+              <div key={idx} className="bg-white p-3 rounded-md border border-gray-200">
+                <p className="text-gray-700">{fb}</p>
               </div>
-            )}
-
-            <div className="space-y-3 mt-2">
-              {article.feedback.length > 0 ? (
-                article.feedback.map((fb, idx) => (
-                  <div key={idx} className="bg-white p-3 rounded-md border border-gray-200">
-                    <p className="text-gray-700">{fb}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 text-sm italic">No feedback has been provided yet.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 p-4 flex justify-end space-x-2">
-            <button 
-              onClick={onEdit} 
-              className="flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition"
-            >
-              <Edit2 size={16} className="mr-2" /> Edit
-            </button>
-            <button 
-              onClick={onDelete} 
-              className="flex items-center px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-md transition"
-            >
-              <Trash2 size={16} className="mr-2" /> Delete
-            </button>
-          </div>
+            ))
+          ) : (
+            <p className="text-gray-500 text-sm italic">No feedback has been provided yet.</p>
+          )}
         </div>
-      );
-    },
-  })
-);
+      </div>
+
+      <div className="border-t border-gray-200 p-4 flex justify-end space-x-2">
+        <button
+          onClick={onEdit}
+          className="flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition"
+        >
+          <Edit2 size={16} className="mr-2" /> Edit
+        </button>
+        <button
+          onClick={onDelete}
+          className="flex items-center px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-md transition"
+        >
+          <Trash2 size={16} className="mr-2" /> Delete
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const ArticlesWithFeedback = () => {
   const [articles, setArticles] = useState<Article[]>([]);

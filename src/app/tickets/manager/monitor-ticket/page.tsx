@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, Suspense, lazy } from 'react';
-import { FaTicketAlt, FaUserCog, FaCalendarAlt, FaExclamationCircle } from 'react-icons/fa';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
+import { AlertCircle, UserCog, Ticket, Calendar } from 'lucide-react';
 
 const ManagerSidebar = lazy(() => import('@/app/sidebar/ManagerSidebar'));
 
@@ -42,10 +42,12 @@ const ManagerMonitorTickets = () => {
 
         const data = await response.json();
 
-        const formattedTickets = data.map((ticket: any) => ({
-          id: ticket.ticketId,
-          subject: ticket.title,
-          assignee: ticket.assignedTo ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}` : 'Unassigned',
+        const formattedTickets = data.map((ticket: Ticket) => ({
+          id: ticket.id, // Corrected from ticket.ticketId to ticket.id
+          subject: ticket.subject, // Corrected from ticket.title to ticket.subject
+          assignee: ticket.assignee // Corrected from ticket.assignedTo to ticket.assignee
+            ? `${ticket.assignee}`
+            : null, // Ensure null is handled
           priority: ticket.priority,
           status: ticket.status,
           createdAt: ticket.createdAt,
@@ -89,7 +91,7 @@ const ManagerMonitorTickets = () => {
     (searchTerm === '' ||
       ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.assignee.toLowerCase().includes(searchTerm.toLowerCase()))
+      (ticket.assignee && ticket.assignee.toLowerCase().includes(searchTerm.toLowerCase()))) // Added null check for assignee
   );
 
   const statusCounts = {
@@ -121,7 +123,7 @@ const ManagerMonitorTickets = () => {
                   <p className="text-2xl font-bold">{statusCounts.Open}</p>
                 </div>
                 <div className="p-3 bg-red-100 rounded-full">
-                  <FaExclamationCircle className="text-red-500 text-xl" />
+                  <AlertCircle size={24} className="text-red-500" />
                 </div>
               </div>
             </div>
@@ -132,7 +134,7 @@ const ManagerMonitorTickets = () => {
                   <p className="text-2xl font-bold">{statusCounts['In Progress']}</p>
                 </div>
                 <div className="p-3 bg-yellow-100 rounded-full">
-                  <FaUserCog className="text-yellow-500 text-xl" />
+                  <UserCog size={24} className="text-yellow-500" />
                 </div>
               </div>
             </div>
@@ -143,7 +145,7 @@ const ManagerMonitorTickets = () => {
                   <p className="text-2xl font-bold">{statusCounts.Resolved}</p>
                 </div>
                 <div className="p-3 bg-green-100 rounded-full">
-                  <FaTicketAlt className="text-green-500 text-xl" />
+                  <Ticket size={24} className="text-green-500" />
                 </div>
               </div>
             </div>
@@ -154,7 +156,7 @@ const ManagerMonitorTickets = () => {
                   <p className="text-2xl font-bold">{statusCounts.Closed}</p>
                 </div>
                 <div className="p-3 bg-gray-100 rounded-full">
-                  <FaCalendarAlt className="text-gray-500 text-xl" />
+                  <Calendar size={24} className="text-gray-500" />
                 </div>
               </div>
             </div>
@@ -212,7 +214,7 @@ const ManagerMonitorTickets = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-blue-100 rounded-full">
-                            <FaTicketAlt className="text-blue-600" />
+                            <Ticket className="text-blue-600" />
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">#{ticket.id}</div>

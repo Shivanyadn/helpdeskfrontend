@@ -1,9 +1,11 @@
+// app/tickets/agent/view-ticket/page.tsx
+
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 import AgentSidebar from '@/app/sidebar/AgentSidebar';
-import { ArrowLeft, Clock, FileText, AlertCircle, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Clock, FileText, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 interface Ticket {
@@ -21,49 +23,35 @@ interface Ticket {
   resolution?: string;
 }
 
-export default function AgentViewTicketPage() {
-  const router = useRouter();
+// Extract your inner component
+function ViewTicketContent() {
   const searchParams = useSearchParams();
-  const ticketId = searchParams.get('id') || 'TICKET-1'; // Default ID if none provided
+  const ticketId = searchParams.get('id') || 'TICKET-1';
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [ticket, setTicket] = useState<Ticket[] | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   useEffect(() => {
     const fetchTicket = async () => {
       try {
         setLoading(true);
-
-        const token = localStorage.getItem('token') || localStorage.getItem('auth_token') || '';
-
+        const token = localStorage.getItem('token') || '';
         const response = await fetch(`http://localhost:5000/api/tickets`, {
-          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include',
         });
 
-        if (!response.ok) {
-          throw new Error(`Error fetching tickets: ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
         const data: Ticket[] = await response.json();
-
-        // Filter tickets where assignedTo.firstName matches "John"
-        const filteredTickets = data.filter(
-          (ticket) => ticket.assignedTo?.firstName === 'John'
-        );
-
-        setTicket(filteredTickets); // Store only the filtered tickets
-      } catch (error) {
-        console.error('Error fetching tickets:', error);
-        setTicket([]); // Set an empty array if there's an error
+        const filtered = data.filter((ticket) => ticket.assignedTo?.firstName === 'John');
+        setTicket(filtered);
+      } catch (err) {
+        console.error(err);
+        setTicket([]);
       } finally {
         setLoading(false);
       }
@@ -74,16 +62,11 @@ export default function AgentViewTicketPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Open':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'In Progress':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'Resolved':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'Closed':
-        return 'bg-slate-100 text-slate-800 border-slate-200';
-      default:
-        return 'bg-slate-100 text-slate-800 border-slate-200';
+      case 'Open': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'In Progress': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'Resolved': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Closed': return 'bg-slate-100 text-slate-800 border-slate-200';
+      default: return 'bg-slate-100 text-slate-800 border-slate-200';
     }
   };
 
@@ -95,10 +78,7 @@ export default function AgentViewTicketPage() {
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-2">View Ticket Details</h1>
             <div className="flex items-center gap-2">
-              <Link
-                href="/dashboard/agent"
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-              >
+              <Link href="/dashboard/agent" className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
                 <ArrowLeft size={14} />
                 <span>Back to Dashboard</span>
               </Link>
@@ -119,11 +99,7 @@ export default function AgentViewTicketPage() {
                   <div className="p-6 border-b border-gray-100">
                     <div className="flex justify-between items-start">
                       <h2 className="text-xl font-semibold text-gray-800">{t.title}</h2>
-                      <div
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          t.status
-                        )}`}
-                      >
+                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(t.status)}`}>
                         {t.status}
                       </div>
                     </div>
@@ -141,7 +117,6 @@ export default function AgentViewTicketPage() {
                       Description
                     </h3>
                     <p className="text-gray-600 whitespace-pre-line mb-4">{t.description}</p>
-
                     <Link
                       href={`/tickets/agent/update-ticket?id=${t.ticketId}`}
                       className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -164,5 +139,14 @@ export default function AgentViewTicketPage() {
         </div>
       </div>
     </>
+  );
+}
+
+// Export your suspense-wrapped page
+export default function AgentViewTicketPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-gray-500">Loading ticket data...</div>}>
+      <ViewTicketContent />
+    </Suspense>
   );
 }

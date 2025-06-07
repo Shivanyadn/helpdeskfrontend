@@ -9,7 +9,6 @@ import {
   BarChart,
   Settings,
   ChevronDown,
-  ChevronUp,
   X,
   User,
 } from "lucide-react";
@@ -305,6 +304,16 @@ const AgentSidebar: React.FC<AgentSidebarProps> = ({ isOpen, toggleSidebar }) =>
             {isOpen && <span className="ml-3 text-sm font-medium">Settings</span>}
           </Link>
         </div>
+      </div>
+
+      {/* Sidebar content with responsive layout */}
+      <div className={`sidebar-content ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
+        {/* Render different layouts or styles based on `isMobile` */}
+        {isMobile ? (
+          <p className="text-sm text-gray-500">Mobile view enabled</p>
+        ) : (
+          <p className="text-sm text-gray-500">Desktop view enabled</p>
+        )}
       </div>
     </motion.aside>
   );

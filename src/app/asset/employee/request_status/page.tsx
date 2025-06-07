@@ -7,6 +7,14 @@ import Link from 'next/link';
 // Remove the import for getAuthToken since it's not exported
 // import { getAuthToken } from '@/api/asset';
 
+// Define the structure of an attachment
+interface Attachment {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string;
+}
+
 // Define interface for asset request data
 interface AssetRequest {
   _id: {
@@ -19,7 +27,7 @@ interface AssetRequest {
   justification: string;
   costCenter: string;
   timeline: string;
-  attachments: any[];
+  attachments: Attachment[]; // Replace `any[]` with `Attachment[]`
   status: string;
   createdAt: {
     $date: string;
@@ -63,9 +71,9 @@ export default function RequestStatusPage() {
       const authToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
       
       console.log('Auth Token:', authToken); // Debugging line
-      console.log('Fetching from URL:', 'http://localhost:5005/api/servicerequest/requests'); // Debugging line
+      console.log('Fetching from URL:', 'http://localhost:5015/api/servicerequest/requests'); // Debugging line
       
-      const response = await fetch('http://localhost:5005/api/servicerequest/requests', {
+      const response = await fetch('http://localhost:5015/api/servicerequest/requests', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

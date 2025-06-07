@@ -12,6 +12,8 @@ type User = {
   profile_image: string;
 };
 
+
+
 type AuthContextType = {
   user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
@@ -35,48 +37,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
+const login = async (username: string, password: string): Promise<boolean> => {
+  setIsLoading(true);
+  setError(null);
+  
+  try {
+    const response = await authService.login({ username, password });
     
-    try {
-      const response = await authService.login({ username, password });
+    console.log('Full login response:', response); // Detailed log
+    
+    if (response.success && response.data && response.data.accessToken && response.data.user) {
+      const userData = response.data.user;
+      const token = response.data.accessToken;
       
-      console.log('Full login response:', response); // Detailed log
+      localStorage.setItem('token', token);
+      localStorage.setItem('user_data', JSON.stringify(userData));
       
-      if (response.success && response.data.accessToken && response.data.user) { // Check for accessToken and user
-        const userData = response.data.user;
-        const token = response.data.accessToken;
-        
-        // Store token and user data
-        localStorage.setItem('token', token);
-        localStorage.setItem('user_data', JSON.stringify(userData));
-        
-        setUser({
-          id: userData.id,
-          email: userData.email,
-          username: userData.username,
-          role: userData.role,
-          permissions: userData.permissions,
-          project_name: userData.project_name,
-          profile_image: userData.profile_image,
-        });
-        
-        setIsLoading(false);
-        return true;
-      } else {
-        console.error('Login failed:', response.error); // Debug log
-        setError(response.error || 'Login failed');
-        setIsLoading(false);
-        return false;
-      }
-    } catch (err) {
-      console.error('Error during login:', err); // Debug log
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setUser({
+        id: userData.id,
+        email: userData.email,
+        username: userData.username,
+        role: userData.role,
+        permissions: userData.permissions,
+        project_name: userData.project_name,
+        profile_image: userData.profile_image,
+      });
+      
+      setIsLoading(false);
+      return true;
+    } else {
+      console.error('Login failed:', response.error);
+      setError(response.error || 'Login failed');
       setIsLoading(false);
       return false;
     }
-  };
+  } catch (err) {
+    console.error('Error during login:', err);
+    setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    setIsLoading(false);
+    return false;
+  }
+};
+
 
   const logout = () => {
     authService.logout();

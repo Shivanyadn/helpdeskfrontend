@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import AdminSidebar from "@/app/sidebar/AdminSidebar";
-import { Menu, Plus, Filter, AlertTriangle, Trash2, Edit, ChevronDown, Save, X, ArrowUp, ArrowDown, Info, Check, MoreHorizontal, Zap, Settings, Eye, EyeOff } from 'lucide-react';
+import { Menu, Plus, Filter, AlertTriangle, Trash2, Edit, ChevronDown, ArrowUp, ArrowDown, Info, MoreHorizontal, Zap, Settings, Eye, EyeOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion} from 'framer-motion';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -35,34 +34,16 @@ const AdminRulesAutomationPage = () => {
     { id: 3, name: 'Password Reset', condition: 'Subject contains Password Reset', action: 'Auto-reply with reset instructions', active: false, createdAt: '2023-12-01' },
   ]);
 
-  const [newRule, setNewRule] = useState({ name: '', condition: '', action: '' });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingRule, setEditingRule] = useState<Rule | null>(null);
-  const [conditionType, setConditionType] = useState('contains');
-  const [actionType, setActionType] = useState('assign');
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingRule, setEditingRule] = useState<Rule | null>(null); // Added this line
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const handleAddRule = () => {
-    if (!newRule.name || !newRule.condition || !newRule.action) return;
-
-    setRules((prev) => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        ...newRule,
-        active: true,
-        createdAt: new Date().toISOString().split('T')[0],
-      },
-    ]);
-    setNewRule({ name: '', condition: '', action: '' });
-    setShowForm(false);
-  };
 
   const handleDeleteRule = (id: number) => {
     setRules((prev) => prev.filter((r) => r.id !== id));
@@ -78,35 +59,9 @@ const AdminRulesAutomationPage = () => {
 
   const handleEditRule = (rule: Rule) => {
     setEditingRule(rule);
-    setNewRule({
-      name: rule.name,
-      condition: rule.condition,
-      action: rule.action
-    });
     setShowForm(true);
   };
 
-  const handleSaveEdit = () => {
-    if (!editingRule) return;
-    
-    setRules((prev) => 
-      prev.map((rule) => 
-        rule.id === editingRule.id 
-          ? { ...rule, name: newRule.name, condition: newRule.condition, action: newRule.action } 
-          : rule
-      )
-    );
-    
-    setEditingRule(null);
-    setNewRule({ name: '', condition: '', action: '' });
-    setShowForm(false);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingRule(null);
-    setNewRule({ name: '', condition: '', action: '' });
-    setShowForm(false);
-  };
 
   const moveRuleUp = (id: number) => {
     setRules(prev => {
@@ -148,26 +103,13 @@ const AdminRulesAutomationPage = () => {
     ]);
   };
 
-  // New function to handle search
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  // Filter rules based on active tab and search term
-  const filteredRules = rules
-    .filter(rule => {
-      if (activeTab === 'active') return rule.active;
-      if (activeTab === 'inactive') return !rule.active;
-      return true;
-    })
-    .filter(rule => {
-      if (!searchTerm) return true;
-      return (
-        rule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        rule.condition.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        rule.action.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
+  // Define filteredRules based on activeTab and searchTerm
+  const filteredRules = rules.filter((rule) => {
+    if (activeTab === 'active' && !rule.active) return false;
+    if (activeTab === 'inactive' && rule.active) return false;
+    if (searchTerm && !rule.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    return true;
+  });
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -177,8 +119,6 @@ const AdminRulesAutomationPage = () => {
         <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button 
-              variant="ghost" 
-              size="icon" 
               onClick={toggleSidebar} 
               className="md:hidden"
             >
@@ -186,7 +126,7 @@ const AdminRulesAutomationPage = () => {
             </Button>
             <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
               <Zap className="h-5 w-5 text-blue-600" />
-              Rules & Automation
+              Rules &amp; Automation
             </h1>
           </div>
           
@@ -194,7 +134,6 @@ const AdminRulesAutomationPage = () => {
             <Button 
               onClick={() => {
                 setEditingRule(null);
-                setNewRule({ name: '', condition: '', action: '' });
                 setShowForm(!showForm);
               }}
               className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
@@ -207,201 +146,7 @@ const AdminRulesAutomationPage = () => {
         </div>
 
         <div className="p-6 max-w-7xl mx-auto">
-          {/* Introduction Card - Redesigned with better visual hierarchy */}
-          <Card className="mb-8 overflow-hidden border-none shadow-md">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white">
-              <div className="flex items-start gap-4">
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <Settings className="h-6 w-6" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Ticket Automation Rules</h2>
-                  <p className="mt-2 text-white/90 max-w-3xl">
-                    Create rules to automatically route, assign, and process tickets based on conditions.
-                    Rules are processed in order from top to bottom, with higher rules taking precedence.
-                  </p>
-                </div>
-              </div>
-            </div>
-           </Card> 
-           
-
-          {/* Search and Filter Controls */}
-          <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <Tabs defaultValue="all" className="w-full md:w-auto" onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-3 w-full md:w-auto">
-                <TabsTrigger value="all" className="px-4">All Rules</TabsTrigger>
-                <TabsTrigger value="active" className="px-4">Active</TabsTrigger>
-                <TabsTrigger value="inactive" className="px-4">Disabled</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
-            <div className="relative w-full md:w-64">
-              <input
-                type="text"
-                placeholder="Search rules..."
-                value={searchTerm}
-                onChange={handleSearch}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <svg
-                className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-          </div>
-
-          {/* Rule Creation Form - Enhanced with better visual design */}
-          <AnimatePresence>
-            {showForm && (
-              <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200"
-              >
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    {editingRule ? (
-                      <>
-                        <Edit className="h-5 w-5 text-blue-600" />
-                        Edit Rule
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-5 w-5 text-blue-600" />
-                        Create New Rule
-                      </>
-                    )}
-                  </h3>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={handleCancelEdit}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
-
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Rule Name</label>
-                    <input
-                      placeholder="E.g., High Priority Support Tickets"
-                      value={newRule.name}
-                      onChange={(e) => setNewRule({ ...newRule, name: e.target.value })}
-                      className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        When this condition is met
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info className="h-4 w-4 ml-2 inline text-gray-400" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="w-64">Define when this rule should be triggered</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </label>
-                      <div className="space-y-3">
-                        <select 
-                          className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          value={conditionType}
-                          onChange={(e) => setConditionType(e.target.value)}
-                        >
-                          <option value="contains">Subject contains</option>
-                          <option value="equals">Subject equals</option>
-                          <option value="priority">Priority is</option>
-                          <option value="department">Department is</option>
-                          <option value="category">Category is</option>
-                          <option value="customer">Customer email contains</option>
-                        </select>
-                        <input
-                          placeholder="Condition value"
-                          value={newRule.condition}
-                          onChange={(e) => setNewRule({ ...newRule, condition: e.target.value })}
-                          className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        Perform this action
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info className="h-4 w-4 ml-2 inline text-gray-400" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="w-64">Define what happens when the condition is met</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </label>
-                      <div className="space-y-3">
-                        <select 
-                          className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          value={actionType}
-                          onChange={(e) => setActionType(e.target.value)}
-                        >
-                          <option value="assign">Assign to</option>
-                          <option value="priority">Set priority to</option>
-                          <option value="status">Set status to</option>
-                          <option value="reply">Auto-reply with</option>
-                          <option value="tag">Add tag</option>
-                          <option value="department">Move to department</option>
-                        </select>
-                        <input
-                          placeholder="Action value"
-                          value={newRule.action}
-                          onChange={(e) => setNewRule({ ...newRule, action: e.target.value })}
-                          className="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 flex justify-end space-x-3">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleCancelEdit}
-                    className="border-gray-300 text-gray-700 px-4 py-2"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={editingRule ? handleSaveEdit : handleAddRule}
-                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-4 py-2"
-                    disabled={!newRule.name || !newRule.condition || !newRule.action}
-                  >
-                    <Save className="h-4 w-4" />
-                    <span>{editingRule ? 'Save Changes' : 'Create Rule'}</span>
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Rules List - Redesigned with better visual hierarchy and information display */}
+          {/* Rules List */}
           <Card className="overflow-hidden border border-gray-200 shadow-sm">
             <CardHeader className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -416,7 +161,7 @@ const AdminRulesAutomationPage = () => {
             <CardContent className="p-0">
               {filteredRules.length > 0 ? (
                 <ul className="divide-y divide-gray-200">
-                  {filteredRules.map((rule, index) => (
+                  {filteredRules.map((rule: Rule, index) => (
                     <motion.li 
                       key={rule.id} 
                       className={`p-5 transition-colors hover:bg-gray-50 ${!rule.active ? 'bg-gray-50/50' : ''}`}
@@ -454,8 +199,6 @@ const AdminRulesAutomationPage = () => {
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button 
-                                    variant="ghost" 
-                                    size="icon"
                                     onClick={() => moveRuleUp(rule.id)}
                                     disabled={index === 0}
                                     className="text-gray-500 hover:text-gray-700 h-8 w-8"
@@ -473,8 +216,6 @@ const AdminRulesAutomationPage = () => {
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button 
-                                    variant="ghost" 
-                                    size="icon"
                                     onClick={() => moveRuleDown(rule.id)}
                                     disabled={index === filteredRules.length - 1}
                                     className="text-gray-500 hover:text-gray-700 h-8 w-8"
@@ -491,7 +232,7 @@ const AdminRulesAutomationPage = () => {
                           
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button className="h-8 w-8">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -562,7 +303,6 @@ const AdminRulesAutomationPage = () => {
                   </p>
                   {(activeTab !== 'all' || searchTerm) && (
                     <Button 
-                      variant="outline" 
                       onClick={() => {
                         setActiveTab('all');
                         setSearchTerm('');
@@ -601,7 +341,7 @@ const AdminRulesAutomationPage = () => {
                     Rule Priority
                   </h4>
                   <p className="text-blue-700 text-sm">
-                    Rules are processed in order from top to bottom. More specific rules should be placed first to ensure they're applied before more general rules.
+                    Rules are processed in order from top to bottom. More specific rules should be placed first to ensure they&apos;re applied before more general rules.
                   </p>
                 </div>
                 
@@ -625,7 +365,7 @@ const AdminRulesAutomationPage = () => {
                     Testing Rules
                   </h4>
                   <p className="text-blue-700 text-sm">
-                    Create a test ticket to verify your rule works as expected. You can temporarily disable rules that aren't working correctly while you troubleshoot them.
+                    Create a test ticket to verify your rule works as expected. You can temporarily disable rules that aren&apos;t working correctly while you troubleshoot them.
                   </p>
                 </div>
                 
@@ -694,11 +434,113 @@ const AdminRulesAutomationPage = () => {
               </div>
             </CardContent>
             <CardFooter className="bg-gray-50 border-t border-gray-200 flex justify-end">
-              <Button variant="outline" size="sm" className="text-sm">
+              <Button className="text-sm">
                 View Automation Logs
               </Button>
             </CardFooter>
           </Card>
+
+          {/* Rule Form - Shown when creating or editing a rule */}
+          {showForm && (
+            <div className="mt-8">
+              <Card className="border border-gray-200 shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold">
+                    {editingRule ? `Edit Rule: ${editingRule.name}` : 'Create New Rule'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Rule Name
+                      </label>
+                      <input
+                        type="text"
+                        value={editingRule?.name || ''}
+                        onChange={(e) => setEditingRule({ ...editingRule, name: e.target.value } as Rule)}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                        placeholder="Enter rule name"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Condition
+                      </label>
+                      <input
+                        type="text"
+                        value={editingRule?.condition || ''}
+                        onChange={(e) => setEditingRule({ ...editingRule, condition: e.target.value } as Rule)}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                        placeholder="Enter condition"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Action
+                      </label>
+                      <input
+                        type="text"
+                        value={editingRule?.action || ''}
+                        onChange={(e) => setEditingRule({ ...editingRule, action: e.target.value } as Rule)}
+                        className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                        placeholder="Enter action"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Switch 
+                        checked={editingRule?.active} 
+                        onCheckedChange={() => setEditingRule({ ...editingRule, active: !editingRule?.active } as Rule)}
+                        className="data-[state=checked]:bg-green-600"
+                      />
+                      <span className="text-sm text-gray-500">
+                        {editingRule?.active ? 'Rule is active' : 'Rule is inactive'}
+                      </span>
+                    </div>
+                  </form>
+                </CardContent>
+                <CardFooter className="bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
+                  <Button 
+                    onClick={() => setShowForm(false)} 
+                    className="text-sm"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      if (editingRule) {
+                        setRules((prev) => 
+                          prev.map((rule) => rule.id === editingRule.id ? editingRule : rule)
+                        );
+                      } else {
+                        setRules(prev => [
+                          ...prev,
+                          {
+                            id: Math.max(...prev.map(r => r.id)) + 1,
+                            name: 'New Rule',
+                            condition: 'Enter condition',
+                            action: 'Enter action',
+                            active: true,
+                            createdAt: new Date().toISOString().split('T')[0],
+                          }
+                        ]);
+                      }
+                      setShowForm(false);
+                    }} 
+                    className="text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {editingRule ? 'Update Rule' : 'Create Rule'}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
     </div>

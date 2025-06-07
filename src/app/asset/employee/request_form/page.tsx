@@ -22,13 +22,12 @@ export default function AssetRequestFormPage() {
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('Medium');
   const [reason, setReason] = useState('');
-  const [requestStatus, setRequestStatus] = useState<string>('');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [requestId, setRequestId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -77,7 +76,6 @@ export default function AssetRequestFormPage() {
       
       // Handle successful response
       setRequestId(response.data.requestId);
-      setRequestStatus('Your asset request has been submitted successfully!');
       setFormSubmitted(true);
     } catch (error) {
       console.error('Error submitting asset request:', error);
@@ -192,7 +190,16 @@ export default function AssetRequestFormPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">Request Submitted Successfully!</h3>
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  Your asset request has been submitted and is now pending approval. You will be notified once it's processed.
+                  Your asset request has been submitted and is now pending approval. You will be notified once it&apos;s processed.
+                </p>
+                
+                <p className="text-sm text-blue-700">
+                  By submitting this request, you confirm that the information provided is accurate and the asset is required for your work.
+                </p>
+                
+                <p className="text-xs text-red-600 mt-1">
+                  High priority requests require manager approval and detailed justification. 
+                  Please ensure you&apos;ve provided a clear reason for the urgency.
                 </p>
                 
                 <div className="bg-gray-50 rounded-lg p-4 max-w-md mx-auto mb-6 border border-gray-200">
@@ -341,7 +348,7 @@ export default function AssetRequestFormPage() {
                                 <p className="text-sm text-red-700 font-medium">High Priority Request</p>
                                 <p className="text-xs text-red-600 mt-1">
                                   High priority requests require manager approval and detailed justification. 
-                                  Please ensure you've provided a clear reason for the urgency.
+                                  Please ensure you&apos;ve provided a clear reason for the urgency.
                                 </p>
                               </div>
                             </div>
@@ -549,9 +556,9 @@ export default function AssetRequestFormPage() {
                           <h3 className="font-medium text-blue-800 mb-2">What Happens Next?</h3>
                           <ol className="text-sm text-blue-700 space-y-2 list-decimal pl-4">
                             <li>Your request will be reviewed by the IT department</li>
-                            <li>You'll receive an email notification about approval</li>
+                            <li>You&apos;ll receive an email notification about approval</li>
                             <li>If approved, the asset will be prepared for delivery</li>
-                            <li>You'll be notified when the asset is ready</li>
+                            <li>You&apos;ll be notified when the asset is ready</li>
                           </ol>
                         </div>
                         

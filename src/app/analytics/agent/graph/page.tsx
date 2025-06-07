@@ -2,7 +2,7 @@
 
 import { useState, lazy, Suspense, useEffect } from 'react';
 import AgentSidebar from '@/app/sidebar/AgentSidebar';
-import { BarChart3, PieChart, LineChart, Clock, AlertTriangle, MessageSquare, ThumbsUp, Download } from 'lucide-react';
+import { BarChart3, Clock, AlertTriangle, MessageSquare, ThumbsUp, Download } from 'lucide-react'; // Removed PieChart and LineChart
 import axios from 'axios';
 import {
   Chart as ChartJS,

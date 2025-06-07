@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import AdminSidebar from '@/app/sidebar/AdminSidebar';
-import { Menu, Phone, MessageSquare, Send, Plus, Trash2, Save, Settings, Mic, PhoneCall, User, Edit, RefreshCw } from 'lucide-react';
+import { Menu, Phone, MessageSquare, Send, Plus, Trash2, Save, Settings, PhoneCall, User, RefreshCw } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -38,9 +38,17 @@ const ivrOptions = [
   },
 ];
 
+// Define the Message type
+interface Message {
+  id: number;
+  text: string;
+  sender: 'admin' | 'support';
+  timestamp: string;
+}
+
 const AdminIVRPage = () => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -80,7 +88,7 @@ const AdminIVRPage = () => {
       { 
         id: prevMessages.length + 1, 
         text: response, 
-        sender: 'support',
+        sender: 'support', // Explicitly set to 'support'
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       },
     ]);
@@ -88,10 +96,10 @@ const AdminIVRPage = () => {
 
   const handleSendMessage = () => {
     if (message.trim()) {
-      const newMessage = {
+      const newMessage: Message = {
         id: messages.length + 1, 
         text: message, 
-        sender: 'admin',
+        sender: 'admin', // Explicitly set to 'admin'
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       
@@ -100,13 +108,13 @@ const AdminIVRPage = () => {
       
       // Simulate response after a delay
       setTimeout(() => {
-        const autoResponse = {
+        const autoResponse: Message = {
           id: messages.length + 2,
           text: "Thank you for your message. Our team will get back to you shortly.",
-          sender: 'support',
+          sender: 'support', // Explicitly set to 'support'
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
-        setMessages(prev => [...prev, autoResponse]);
+        setMessages((prev) => [...prev, autoResponse]);
       }, 1000);
     }
   };
@@ -172,11 +180,9 @@ const AdminIVRPage = () => {
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 shadow-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={toggleSidebar} 
-                className="md:hidden text-white hover:bg-indigo-700/50"
+              <Button
+                onClick={toggleSidebar}
+                className="md:hidden text-white hover:bg-indigo-700/50 p-2 rounded-full"
               >
                 <Menu />
               </Button>
@@ -189,8 +195,7 @@ const AdminIVRPage = () => {
               </div>
             </div>
             <div>
-              <Button 
-                variant="outline" 
+              <Button
                 onClick={() => setEditingIVR(!editingIVR)}
                 className="bg-white/10 text-white hover:bg-white/20 border-white/20"
               >
@@ -243,11 +248,9 @@ const AdminIVRPage = () => {
                                 <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
                                   {option.responseTime}
                                 </Badge>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
+                                <Button
                                   onClick={() => handleRemoveOption(option.id)}
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -300,9 +303,9 @@ const AdminIVRPage = () => {
                               rows={3}
                             />
                           </div>
-                          <Button 
+                          <Button
                             onClick={handleAddOption}
-                            className="w-full"
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                             disabled={!newOption.text.trim()}
                           >
                             <Plus className="w-4 h-4 mr-2" />
@@ -313,13 +316,16 @@ const AdminIVRPage = () => {
                     </div>
                   </CardContent>
                   <CardFooter className="flex justify-between border-t pt-6">
-                    <Button variant="outline" onClick={() => setEditingIVR(false)}>
-                      Cancel
-                    </Button>
-                    <Button 
+                    <Button
+  onClick={() => setEditingIVR(false)}
+  className="border border-gray-300 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg"
+>
+  Cancel
+</Button>
+                    <Button
                       onClick={handleSaveIVRConfig}
                       disabled={isSaving}
-                      className="bg-indigo-600 hover:bg-indigo-700"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg"
                     >
                       {isSaving ? (
                         <>

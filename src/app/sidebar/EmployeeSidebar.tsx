@@ -9,11 +9,8 @@ import {
   Laptop,
   BarChart,
   ChevronDown,
-  ChevronUp,
-  Menu,
   X,
   Settings,
-  User,
   Sun,
   Moon,
 } from "lucide-react";
@@ -356,6 +353,16 @@ const EmployeeSidebar: React.FC<EmployeeSidebarProps> = ({ isOpen, toggleSidebar
             </div>
             {isOpen && <span className="ml-3 text-sm font-medium">Settings</span>}
           </Link>
+        </div>
+
+        {/* Responsive Layout Indicator */}
+        <div className={`sidebar-content ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
+          {/* Render different layouts or styles based on `isMobile` */}
+          {isMobile ? (
+            <p className="text-sm text-gray-500">Mobile view enabled</p>
+          ) : (
+            <p className="text-sm text-gray-500">Desktop view enabled</p>
+          )}
         </div>
       </div>
     </motion.aside>

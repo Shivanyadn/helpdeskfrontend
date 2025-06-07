@@ -5,14 +5,8 @@ import ManagerSidebar from '@/app/sidebar/ManagerSidebar';
 import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import dynamic from 'next/dynamic';
 import { FileText, Download, Filter, Printer, Calendar, Clock, AlertTriangle, CheckCircle, Search, BarChart2 } from 'lucide-react';
 
-// Dynamically import CSVLink with SSR disabled to prevent hydration errors
-const CSVLink = dynamic(
-  () => import('react-csv').then(mod => mod.CSVLink),
-  { ssr: false }
-);
 
 const trendsData = [
   { date: '2025-04-01', resolved: 10, overdue: 2 },

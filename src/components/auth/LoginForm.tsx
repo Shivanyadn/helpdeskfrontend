@@ -2,7 +2,6 @@ import { useState, lazy, useEffect, memo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { FiUser, FiLock, FiEye, FiEyeOff, FiArrowRight } from 'react-icons/fi';
 import { motion } from 'framer-motion';
-import { IconType } from 'react-icons';
 import { ComponentType } from 'react';
 import { IconBaseProps } from 'react-icons';
 

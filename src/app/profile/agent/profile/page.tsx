@@ -3,6 +3,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 
 const agentData = {
   name: 'John Doe',
@@ -17,10 +18,12 @@ const AgentProfile = () => {
     <div className="p-6 max-w-4xl mx-auto bg-white shadow-lg rounded-lg">
       <h2 className="text-2xl font-bold mb-6">Agent Profile</h2>
       <div className="flex items-center space-x-4">
-        <img
+        <Image
           src={agentData.avatar}
           alt="Agent Avatar"
-          className="w-24 h-24 rounded-full"
+          width={96}
+          height={96}
+          className="rounded-full"
         />
         <div>
           <h3 className="text-xl font-semibold">{agentData.name}</h3>

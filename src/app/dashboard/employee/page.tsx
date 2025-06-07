@@ -11,21 +11,17 @@ import {
   Search,
   Bell,
   User,
-  Calendar,
   BarChart,
   Menu,
   TrendingUp,
-  Download,
   Settings,
   ChevronDown,
   Briefcase,
   MessageCircle,
-  AlertTriangle,
   X
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 // Import the analytics components
 import TicketStatusGraph from '@/app/analytics/employee/graph/view_ticket_status';
@@ -500,7 +496,9 @@ export default function EmployeeDashboard() {
                         <MessageCircle size={32} className="text-green-600" />
                       </div>
                       <h3 className="text-lg font-semibold text-gray-800 mb-2">Connect on WhatsApp</h3>
-                      <p className="text-gray-600 text-center mb-6">Chat with our support team directly through WhatsApp</p>
+                      <p className="text-gray-600 text-center mb-6">
+                        Chat with our support team directly through WhatsApp. We&apos;re here to help!
+                      </p>
                       <button 
                         onClick={() => {
                           const supportNumber = '7338265989';
@@ -527,7 +525,7 @@ export default function EmployeeDashboard() {
                     <div className="p-4 bg-gradient-to-r from-blue-500 to-indigo-600 flex justify-between items-center">
                       <div>
                         <h3 className="text-white font-semibold">Live Support</h3>
-                        <p className="text-blue-100 text-sm">We're here to help</p>
+                        <p className="text-blue-100 text-sm">We will be with you soon</p>
                       </div>
                       <button 
                         onClick={() => setShowLiveChat(false)}

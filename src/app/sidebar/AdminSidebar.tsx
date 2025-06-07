@@ -9,7 +9,6 @@ import {
   Book,
   MessageSquare,
   Monitor,
-  BarChart,
   ShieldCheck,
   ChevronDown,
   X,
@@ -375,6 +374,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, toggleSidebar }) =>
             {isOpen && <span className="ml-3 text-sm font-medium">System Settings</span>}
           </Link>
         </div>
+      </div>
+
+      {/* Sidebar Content - Mobile/Desktop Specific */}
+      <div className={`sidebar-content ${isMobile ? 'mobile-layout' : 'desktop-layout'}`}>
+        {/* Render different layouts or styles based on `isMobile` */}
+        {isMobile ? (
+          <p className="text-sm text-gray-500">Mobile view enabled</p>
+        ) : (
+          <p className="text-sm text-gray-500">Desktop view enabled</p>
+        )}
       </div>
     </motion.aside>
   );

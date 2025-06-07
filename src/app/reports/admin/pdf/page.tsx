@@ -15,10 +15,10 @@ import {
   CheckCircle2, 
   AlertCircle,
   RefreshCw,
-  FileUp,
   Settings,
   Eye
 } from 'lucide-react';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,6 +26,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+
+interface JsPDFInternal {
+  getNumberOfPages?: () => number;
+}
 
 const PdfReportPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -84,8 +88,7 @@ const PdfReportPage = () => {
 
   const handleDownloadPdf = () => {
     setIsGenerating(true);
-    
-    // Simulate processing delay
+
     setTimeout(() => {
       const doc = new jsPDF();
       
@@ -169,17 +172,17 @@ const PdfReportPage = () => {
       });
       
       // Add footer
-      // Using type assertion to fix TypeScript error with getNumberOfPages
-      const pageCount = (doc.internal as any).getNumberOfPages();
+     const pageCount = 'getNumberOfPages' in doc.internal
+  ? (doc.internal as JsPDFInternal).getNumberOfPages?.() || 1
+  : 1;
       doc.setFontSize(8);
       doc.setTextColor(100, 100, 100);
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.text(`Page ${i} of ${pageCount} - Confidential Document - Helpdesk Management System`, 105, 290, { align: 'center' });
       }
-      
+
       doc.save(`${selectedReport || 'tickets'}-report-${new Date().toISOString().split('T')[0]}.pdf`);
-      
       setIsGenerating(false);
     }, 1500);
   };
@@ -201,8 +204,6 @@ const PdfReportPage = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button 
-                variant="ghost" 
-                size="icon" 
                 onClick={toggleSidebar} 
                 className="md:hidden text-white hover:bg-indigo-700/50"
               >
@@ -471,7 +472,6 @@ const PdfReportPage = () => {
                       {/* Preview Button */}
                       <div className="flex justify-end">
                         <Button 
-                          variant="outline" 
                           className="flex items-center gap-2"
                           onClick={() => setShowPreview(!showPreview)}
                         >
@@ -561,7 +561,6 @@ const PdfReportPage = () => {
                   </CardContent>
                   <CardFooter className="flex justify-end gap-3 border-t pt-4">
                     <Button 
-                      variant="outline" 
                       onClick={() => {
                         setSelectedReport(null);
                         setDateRange("last30days");
@@ -634,16 +633,12 @@ const PdfReportPage = () => {
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-2">
                                 <Button 
-                                  variant="outline" 
-                                  size="sm" 
                                   className="text-indigo-600 border-indigo-200 hover:bg-indigo-50"
                                 >
                                   <Download className="h-3.5 w-3.5 mr-1" />
                                   Download
                                 </Button>
                                 <Button 
-                                  variant="ghost" 
-                                  size="sm" 
                                   className="text-gray-500 hover:text-indigo-600"
                                 >
                                   <Eye className="h-3.5 w-3.5 mr-1" />

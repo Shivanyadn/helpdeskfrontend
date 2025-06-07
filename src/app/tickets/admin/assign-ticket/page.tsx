@@ -93,8 +93,8 @@ const AdminAssignTicketPage = () => {
     // Apply sorting
     if (sortField) {
       filtered.sort((a, b) => {
-        let valueA = a[sortField as keyof Ticket];
-        let valueB = b[sortField as keyof Ticket];
+        const valueA = a[sortField as keyof Ticket];
+        const valueB = b[sortField as keyof Ticket];
         
         if (typeof valueA === 'string' && typeof valueB === 'string') {
           return sortDirection === 'asc' 
@@ -224,8 +224,6 @@ const AdminAssignTicketPage = () => {
         <div className="p-6 max-w-7xl mx-auto">
           <div className="flex items-center gap-4 mb-6">
             <Button 
-                variant="ghost" 
-                size="icon" 
                 onClick={toggleSidebar} 
                 className="md:hidden"
               >
@@ -239,7 +237,6 @@ const AdminAssignTicketPage = () => {
             
             <div className="flex items-center space-x-3">
               <Button
-                variant="outline"
                 onClick={refreshTickets}
                 className="flex items-center space-x-2"
               >
@@ -291,7 +288,6 @@ const AdminAssignTicketPage = () => {
 
               {/* Filter Toggle */}
               <Button 
-                variant="outline" 
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center space-x-2"
               >
@@ -340,7 +336,6 @@ const AdminAssignTicketPage = () => {
                   
                   <div className="flex items-end">
                     <Button 
-                      variant="ghost"
                       onClick={() => {
                         setPriorityFilter('');
                         setStatusFilter('');
@@ -387,7 +382,6 @@ const AdminAssignTicketPage = () => {
                   Assign
                 </Button>
                 <Button 
-                  variant="ghost"
                   onClick={() => setSelectedTickets([])}
                   className="text-blue-600 hover:text-blue-800"
                 >

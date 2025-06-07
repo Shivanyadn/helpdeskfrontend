@@ -1,6 +1,6 @@
 import { getToken } from '../auth';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5010/api';
 
 // Payload to create a new ticket
 export interface CreateTicketPayload {
@@ -51,7 +51,7 @@ export const getTickets = async (): Promise<TicketResponse[]> => {
     const token = getAuthToken();
     
     // Use the base URL without any parameters
-    let url = `${API_BASE_URL}/tickets`;
+    const url = `${API_BASE_URL}/tickets`; // Changed from let to const
     
     console.log('Fetching tickets from:', url);
     

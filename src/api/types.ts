@@ -3,7 +3,7 @@ export interface ApiResponse<T> {
   data?: T;
   error?: string;
   accessToken?: string;
-  user?: any;
+  user?: Record<string, unknown>; // Replaced `any` with a generic object type
   expiresAt?: string;
-  validCategories?: any[];
+  validCategories?: string[]; // Replaced `any[]` with `string[]` assuming categories are strings
 }

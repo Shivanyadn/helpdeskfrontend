@@ -9,7 +9,6 @@ import {
   Book,
   MessageSquare,
   Monitor,
-  BarChart,
   ShieldCheck,
   ChevronDown,
   X,
@@ -19,7 +18,6 @@ import {
   Menu,
   Bell,
   Search,
-  HelpCircle,
   Calendar,
   Clock,
   TrendingUp,
@@ -503,7 +501,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, toggleSidebar }) =>
   const [showAssetSubMenu, setShowAssetSubMenu] = useState(false);
   const [showReportsSubMenu, setShowReportsSubMenu] = useState(false);
   const [showAnalyticsSubMenu, setShowAnalyticsSubMenu] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
   // Function to check if the current path starts with a specific prefix
   const isPath = (prefix: string) => pathname.startsWith(prefix);
@@ -524,14 +521,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, toggleSidebar }) =>
     } else if (pathname.startsWith("/analytics/admin")) {
       setShowAnalyticsSubMenu(true);
     }
-
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkIfMobile();
-    window.addEventListener("resize", checkIfMobile);
-    return () => window.removeEventListener("resize", checkIfMobile);
   }, [pathname]);
 
   const ticketSubLinks = [
@@ -852,12 +841,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, toggleSidebar }) =>
 // Main Dashboard Page Component
 const AdminDashboardPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkIfMobile = () => {
       const mobile = window.innerWidth < 1024;
-      setIsMobile(mobile);
       if (mobile) setSidebarOpen(false);
       else setSidebarOpen(true);
     };

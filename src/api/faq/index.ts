@@ -2,7 +2,7 @@
 import { authService } from '../../api/auth/authService';
 
 // API endpoint for articles
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'http://localhost:5011/api';
 
 export interface Article {
   _id: string;

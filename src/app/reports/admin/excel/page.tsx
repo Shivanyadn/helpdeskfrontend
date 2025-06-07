@@ -120,8 +120,6 @@ const ExcelReportPage = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button 
-                variant="ghost" 
-                size="icon" 
                 onClick={toggleSidebar} 
                 className="md:hidden text-white hover:bg-emerald-700/50"
               >
@@ -422,7 +420,6 @@ const ExcelReportPage = () => {
                   </CardContent>
                   <CardFooter className="flex justify-end gap-3 border-t pt-4">
                     <Button 
-                      variant="outline" 
                       onClick={() => {
                         setSelectedReport(null);
                         setDateRange("last30days");
@@ -493,8 +490,6 @@ const ExcelReportPage = () => {
                             <td className="py-3 px-4 text-gray-600">{report.count}</td>
                             <td className="py-3 px-4">
                               <Button 
-                                variant="outline" 
-                                size="sm" 
                                 className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
                               >
                                 <Download className="h-3.5 w-3.5 mr-1" />

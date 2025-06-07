@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import AdminSidebar from "@/app/sidebar/AdminSidebar";
-import { Menu, ArrowUpCircle, Filter, Search, AlertTriangle, Clock, RefreshCw, ChevronDown, Calendar, BarChart4 } from 'lucide-react';
+import { Menu, ArrowUpCircle, Filter, Search, AlertTriangle, Clock, RefreshCw, Calendar, BarChart4 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -210,7 +210,7 @@ const AdminEscalationPage = () => {
           <div className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-700 mb-6 p-6 shadow-md">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden text-white hover:bg-blue-700/50">
+                <Button onClick={toggleSidebar} className="md:hidden text-white hover:bg-blue-700/50">
                   <Menu />
                 </Button>
                 <div>
@@ -219,7 +219,6 @@ const AdminEscalationPage = () => {
                 </div>
               </div>
               <Button 
-                variant="outline" 
                 onClick={refreshData} 
                 className="flex items-center gap-2 bg-white/10 text-white hover:bg-white/20 border-white/20"
                 disabled={isLoading}
@@ -414,8 +413,6 @@ const AdminEscalationPage = () => {
                                   </span>
                                 ) : (
                                   <Button
-                                    size="sm"
-                                    variant="outline"
                                     onClick={() => handleEscalate(ticket.id)}
                                     className="flex items-center gap-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
                                   >
@@ -433,7 +430,6 @@ const AdminEscalationPage = () => {
                                 <Search className="w-8 h-8 mb-2" />
                                 <p>No tickets match your search criteria.</p>
                                 <Button 
-                                  variant="link" 
                                   onClick={() => {
                                     setSearchQuery('');
                                     setFilterPriority('all');
@@ -573,8 +569,6 @@ const AdminEscalationPage = () => {
                             <td className="px-4 py-4">{getStatusBadge(ticket.status)}</td>
                             <td className="px-4 py-4">
                               <Button
-                                size="sm"
-                                variant="outline"
                                 onClick={() => handleEscalate(ticket.id)}
                                 className="flex items-center gap-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
                               >

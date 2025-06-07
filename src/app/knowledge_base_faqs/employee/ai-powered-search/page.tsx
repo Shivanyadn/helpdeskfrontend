@@ -2,9 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import EmployeeSidebar from '@/app/sidebar/EmployeeSidebar';
-import { Search, BookOpen, ArrowLeft, Lightbulb, Sparkles, Clock, ThumbsUp, ThumbsDown, MessageSquare, ExternalLink, Tag, Filter, X, ChevronDown, ChevronUp, Bookmark, Share2, Zap, HelpCircle } from 'lucide-react';
+import { BookOpen, ArrowLeft, Lightbulb, Sparkles, Clock, ThumbsUp, ThumbsDown, MessageSquare, ExternalLink, Tag, Filter, X, ChevronDown, ChevronUp, Share2, Zap, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 // Enhanced FAQ data with categories, tags, and metadata
 const faqs = [
@@ -136,7 +135,6 @@ const FAQsPage = () => {
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [expandedFaqs, setExpandedFaqs] = useState<number[]>([]);
   const [feedbackGiven, setFeedbackGiven] = useState<{[key: number]: 'up' | 'down' | null}>({});
-  const [savedFaqs, setSavedFaqs] = useState<number[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -167,11 +165,6 @@ const FAQsPage = () => {
     }));
   };
 
-  const toggleSaveFaq = (id: number) => {
-    setSavedFaqs(prev => 
-      prev.includes(id) ? prev.filter(faqId => faqId !== id) : [...prev, id]
-    );
-  };
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
@@ -231,7 +224,7 @@ const FAQsPage = () => {
     }
   };
 
-  const useSuggestedQuery = (query: string) => {
+  const handleSuggestedQuery = (query: string) => {
     setSearchQuery(query);
     handleSearch({ target: { value: query } } as React.ChangeEvent<HTMLInputElement>);
   };
@@ -239,19 +232,19 @@ const FAQsPage = () => {
   // Filter FAQs based on category and tags
   useEffect(() => {
     let filtered = faqs;
-    
+
     // Filter by category
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(faq => faq.category === selectedCategory);
     }
-    
+
     // Filter by tags
     if (selectedTags.length > 0) {
       filtered = filtered.filter(faq => 
         selectedTags.some(tag => faq.tags.includes(tag))
       );
     }
-    
+
     // Apply search query filter if exists
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -261,9 +254,9 @@ const FAQsPage = () => {
         faq.tags.some(tag => tag.toLowerCase().includes(query))
       );
     }
-    
+
     setFilteredFAQs(filtered);
-  }, [selectedCategory, selectedTags]);
+  }, [selectedCategory, selectedTags, searchQuery]); // Add `searchQuery` here
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -359,7 +352,7 @@ const FAQsPage = () => {
                               {recentSearches.map((query, index) => (
                                 <button
                                   key={index}
-                                  onClick={() => useSuggestedQuery(query)}
+                                  onClick={() => handleSuggestedQuery(query)}
                                   className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors flex items-center"
                                 >
                                   <Clock size={12} className="mr-1.5 text-gray-500" />
@@ -376,7 +369,7 @@ const FAQsPage = () => {
                             {suggestedQueries.map((query, index) => (
                               <button
                                 key={index}
-                                onClick={() => useSuggestedQuery(query)}
+                                onClick={() => handleSuggestedQuery(query)} // Use `handleSuggestedQuery` here
                                 className="text-left p-2.5 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-800 transition-colors flex items-center"
                               >
                                 <Sparkles size={14} className="mr-2 text-indigo-500 flex-shrink-0" />
@@ -670,7 +663,7 @@ const FAQsPage = () => {
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-1">No results found</h3>
                     <p className="text-gray-500 max-w-md mx-auto mb-4">
-                      We couldn't find any articles matching your search criteria. Try adjusting your filters or search terms.
+                      We couldn&apos;t find any articles matching your search criteria. Try adjusting your filters or search terms.
                     </p>
                     <button 
                       onClick={clearSearch}
@@ -824,4 +817,3 @@ const FAQsPage = () => {
 };
 
 export default FAQsPage;
-                              

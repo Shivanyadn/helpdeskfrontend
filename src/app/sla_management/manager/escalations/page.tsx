@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { FiFilter, FiSearch, FiAlertTriangle, FiClock, FiUser, FiMessageSquare } from 'react-icons/fi';
+import { Clock, MessageCircleDashed, TriangleAlert, User } from 'lucide-react';
 
 // Lazy load the ManagerSidebar
 const ManagerSidebar = dynamic(() => import('@/app/sidebar/ManagerSidebar'), {
@@ -103,7 +103,7 @@ const ManagerSLAEscalationsPage = () => {
               <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex items-center">
                   <div className="p-3 rounded-full bg-red-100 text-red-500 mr-4">
-                    <FiAlertTriangle size={24} />
+                    <TriangleAlert size={24} />
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Total Escalations</p>
@@ -115,7 +115,7 @@ const ManagerSLAEscalationsPage = () => {
               <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex items-center">
                   <div className="p-3 rounded-full bg-yellow-100 text-yellow-500 mr-4">
-                    <FiClock size={24} />
+                    <Clock size={24} />
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Pending Resolution</p>
@@ -127,7 +127,7 @@ const ManagerSLAEscalationsPage = () => {
               <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex items-center">
                   <div className="p-3 rounded-full bg-green-100 text-green-500 mr-4">
-                    <FiUser size={24} />
+                    <User size={24} />
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">In Progress</p>
@@ -143,7 +143,7 @@ const ManagerSLAEscalationsPage = () => {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-grow">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiSearch className="text-gray-400" />
+                  <search className="text-gray-400" />
                 </div>
                 <input
                   type="text"
@@ -155,7 +155,7 @@ const ManagerSLAEscalationsPage = () => {
               </div>
               
               <div className="flex items-center">
-                <FiFilter className="text-gray-400 mr-2" />
+                <filter className="text-gray-400 mr-2" />
                 <select
                   className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                   value={filterStatus}
@@ -174,7 +174,7 @@ const ManagerSLAEscalationsPage = () => {
           <div className="space-y-4">
             {filteredEscalations.length === 0 ? (
               <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 text-center">
-                <FiMessageSquare className="mx-auto text-gray-400 mb-4" size={48} />
+                <MessageCircleDashed className="mx-auto text-gray-400 mb-4" size={48} />
                 <p className="text-gray-600 text-lg">No escalations match your search criteria.</p>
                 <button 
                   className="mt-4 text-blue-500 hover:text-blue-700"
